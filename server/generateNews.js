@@ -10,6 +10,7 @@ const categories = [
   "sports",
   "health",
   "entertainment",
+  "Kenya",
 ];
 
 function getCategoryFromUrl(url) {

@@ -8,7 +8,7 @@ const NewsPage = () => {
   const { newsItems, isLoading } = useContext(NewsContext);
 
   // Define default selected tab
-  const [selectedTab, setSelectedTab] = useState("local");
+  const [selectedTab, setSelectedTab] = useState("kenya");
 
   const itemsPerPage = 12;
   const [currentItemsCount, setCurrentItemsCount] = useState(itemsPerPage);
@@ -85,8 +85,8 @@ const NewsPage = () => {
       ) : (
         <div className="p-8">
           <ul className="grid grid-flow-col text-center text-gray-500 p-1">
-            <li onClick={() => handleTabClick("local")}>
-              <a href="#local" className="flex justify-center py-4">
+            <li onClick={() => handleTabClick("kenya")}>
+              <a href="#kenya" className="flex justify-center py-4">
                 Local
               </a>
             </li>
