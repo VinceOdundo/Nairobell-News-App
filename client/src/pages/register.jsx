@@ -8,8 +8,8 @@ const Register = () => {
     username: "",
     email: "",
     password: "",
-    firstName: "", // change name to firstName
-    lastName: "", // add lastName
+    firstName: "",
+    lastName: "",
   });
   const [err, setErr] = useState(null);
   const history = useNavigate();
@@ -27,7 +27,7 @@ const Register = () => {
       !inputs.email ||
       !inputs.password ||
       !inputs.firstName ||
-      !inputs.lastName // add lastName validation
+      !inputs.lastName
     ) {
       setErr("Please fill in all the fields");
       return;
@@ -103,19 +103,18 @@ const Register = () => {
             <input
               type="text"
               placeholder="First Name"
-              name="firstName" // change name to firstName
+              name="firstName"
               onChange={handleChange}
               className="border-none border-b border-gray-300 py-4 px-2"
             />
             <input
               type="text"
               placeholder="Last Name"
-              name="lastName" // add lastName input
+              name="lastName"
               onChange={handleChange}
               className="border-none border-b border-gray-300 py-4 px-2"
             />
             {err && (
-              // display error message in a styled component with a link if needed
               <div
                 className="text-red-500"
                 dangerouslySetInnerHTML={{ __html: err }}
