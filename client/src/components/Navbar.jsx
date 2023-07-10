@@ -1,9 +1,36 @@
-import React, { useContext, useState } from "react";
+import { Link } from "react-router-dom"; // Assuming you're using React Router
+import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import history from react-router-dom
 import { NewsContext } from "../../contexts/NewsContext";
+import { useContext } from "react";
 import Logo from "../assets/logo.svg";
+import Cookies from "js-cookie"; // Import js-cookie library
+
+const languages = [
+  { code: "en", name: "English" },
+  { code: "sw", name: "Swahili" },
+  { code: "fr", name: "French" },
+  { code: "af", name: "Afrikaans" },
+  { code: "ar", name: "Arabic" },
+  { code: "ha", name: "Hausa" },
+  { code: "ig", name: "Igbo" },
+  { code: "om", name: "Oromo" },
+  { code: "st", name: "Sesotho" },
+  { code: "so", name: "Somali" },
+  { code: "xh", name: "Xhosa" },
+  { code: "yo", name: "Yoruba" },
+  { code: "zu", name: "Zulu" },
+  // add more languages as needed
+];
 
 function Navbar() {
-  const { setSearchQuery, searchQuery } = useContext(NewsContext);
+  const { setSearchQuery, searchQuery, articles, setArticles } =
+    useContext(NewsContext);
+
+  const [language, setLanguage] = useState("en");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const history = useNavigate(); // Use history from react-router-dom
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -13,26 +40,71 @@ function Navbar() {
     e.preventDefault();
   };
 
+  const handleTranslate = async () => {
+    try {
+      // Get the current article index from the context
+      const currentIndex = articles.findIndex(
+        (article) => article.id === currentArticleId
+      );
+      // Get the original content of the current article
+      const originalContent = articles[currentIndex].original;
+      // Check if the translated content for the selected language already exists
+      if (articles[currentIndex][language]) {
+        // If yes, set the content to the translated version
+        setArticles([
+          ...articles.slice(0, currentIndex),
+          {
+            ...articles[currentIndex],
+            content: articles[currentIndex][language],
+          },
+          ...articles.slice(currentIndex + 1),
+        ]);
+      } else {
+        // If not, call the Google Translate API
+        const response = await axios.post(
+          "https://translation.googleapis.com/language/translate/v2",
+          {
+            q: originalContent,
+            target: language,
+            key: "AIzaSyDsyyoGe1RN71YkNmeU32aso_a-bSdFuPA", // Use environment variable for API key
+          }
+        );
+        const translatedContent =
+          response.data.data.translations[0].translatedText;
+        // Add the translated content to the current article object with the language code as the key
+        setArticles([
+          ...articles.slice(0, currentIndex),
+          {
+            ...articles[currentIndex],
+            content: translatedContent,
+            [language]: translatedContent,
+          },
+          ...articles.slice(currentIndex + 1),
+        ]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleLanguageChange = (e) => {
+    setLanguage(e.target.value);
+  };
+
+  const handleLogOut = () => {
+    Cookies.remove("authToken"); // Use cookies to remove the authToken
+    setIsLoggedIn(false);
+    history.push("/");
+  };
+
   return (
     <nav className="flex items-center justify-between flex-wrap bg-white py-4 lg:px-12 shadow border-solid border-t-2 border-blue-700">
       <div className="flex justify-between lg:w-auto w-full lg:border-b-0 pl-6 pr-2 border-solid border-b-2 border-gray-300 pb-5 lg:pb-0">
         <div className="flex items-center flex-shrink-0 text-gray-800 mr-16">
           <img src={Logo} alt="Logo" className="w-96 h-32" />
         </div>
-        <div className="block lg:hidden ">
-          <button
-            id="nav"
-            className="flex items-center px-3 py-2 border-2 rounded text-blue-700 border-blue-700 hover:text-blue-700 hover:border-blue-700"
-          >
-            <svg
-              className="fill-current h-3 w-3"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>Menu</title>
-              <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
-            </svg>
-          </button>
+        <div className="block lg:hidden">
+          {/* Code for the mobile menu button */}
         </div>
       </div>
 
@@ -50,41 +122,66 @@ function Navbar() {
             onChange={handleSearch}
           />
           <button type="submit" className="absolute right-0 top-0 mt-3 mr-2">
+            {/* Code for the search icon */}
             <svg
               className="text-gray-600 h-4 w-4 fill-current"
               xmlns="http://www.w3.org/2000/svg"
-              version="1.1"
-              id="Capa_1"
-              x="0px"
-              y="0px"
-              viewBox="0 0 56.966 56.966"
-              style={{ enableBackground: "new 0 0 56.966 56.966" }}
-              xmlSpace="preserve"
-              width="512px"
-              height="512px"
+              viewBox="0 0 24 24"
             >
               <path
-                d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,
-
-23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z"
+                className="heroicon-ui"
+                d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15zm8.31-1.06l-4.82-4.83a5.5 5.5 0 1 0-.97.96l4.83 4.82a.75.75 0 0 0 .97-.97z"
               />
             </svg>
           </button>
         </form>
-        <div className="flex ">
-          <a
-            href="#"
-            className="block text-md px-4 py-2 rounded text-blue-700 ml-2 font-bold hover:text-white mt-4 hover:bg-blue-700 lg:mt-0"
-          >
-            Members
-          </a>
+        <div className="flex">
+          {isLoggedIn ? (
+            <>
+              <div className="flex items-center gap-2 font-medium hidden md:flex">
+                <img
+                  src={user.profilePicture}
+                  alt={user.username}
+                  className="w-10 h-10 rounded-full border-2 border-white" // adjust the width, height and border as needed
+                />
+                <span>{user.name}</span>
+              </div>
+              <button
+                onClick={handleLogOut}
+                className="block text-md px-4 ml-2 py-2 rounded text-white border-2 border-blue-700 bg-blue-700 font-bold hover:text-blue-700 hover:border-2 hover:border-blue-700 hover:bg-white lg:mt-0"
+              >
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="block text-md px-4 py-2 rounded text-blue-700 ml-2 font-bold hover:text-white mt-4 hover:bg-blue-700 lg:mt-0"
+              >
+                Members
+              </Link>
 
-          <a
-            href="#"
-            className="block text-md px-4 ml-2 py-2 rounded text-white border-2 border-blue-700 bg-blue-700 font-bold hover:text-blue-700 hover:border-2 hover:border-blue-700 hover:bg-white lg:mt-0"
-          >
-            Translate
-          </a>
+              <select
+                value={language}
+                onChange={handleLanguageChange}
+                className="block text-md px-4 py-2 rounded text-blue-700 ml-2 font-bold hover:text-white mt-4 hover:bg-blue-700 lg:mt-0"
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleTranslate}
+                className="block text-md px-4 ml-2 py-2 rounded text-white border-2 border-blue-700 bg-blue-700 font-bold hover:text-blue-700 hover:border-2 hover:border-blue-700 hover:bg-white lg:mt-0"
+              >
+                Translate
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>

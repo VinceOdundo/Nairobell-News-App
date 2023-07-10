@@ -7,7 +7,7 @@ import {
   nation,
 } from "../assets/imports";
 
-const Brand = () => (
+const Brands = () => (
   <div className="flex flex-wrap justify-center items-center p-4">
     <div className="flex justify-center items-center m-4 w-32">
       <img src={punch} alt="punch" />
@@ -27,4 +27,4 @@ const Brand = () => (
   </div>
 );
 
-export default Brand;
+export default Brands;

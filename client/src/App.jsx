@@ -1,67 +1,65 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import axios from "axios";
-import { NewsContextProvider } from "../contexts/NewsContext";
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Navbar from "./components/Navbar";
-import NewsPage from "./components/News";
-import Brands from "./components/Brands";
-import Hero from "./components/Hero";
+import Home from "./pages/home";
+import Landing from "./pages/landing";
+import Profile from "./pages/profile";
+import Login from "./pages/login";
+import Register from "./pages/register";
+import { AuthContext } from "../contexts/authContext";
+import { useContext } from "react";
+import { NewsContextProvider } from "../contexts/NewsContext";
+import { QueryClient, QueryClientProvider } from "react-query";
 
-const API_BASE_URL = "http://localhost:3000";
+function App() {
+  const { currentUser } = useContext(AuthContext);
 
-const App = () => {
-  const [newsItems, setNewsItems] = useState([]);
-  const [isLoading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredNewsItems, setFilteredNewsItems] = useState([]);
+  const queryClient = new QueryClient();
 
-  const fetchNews = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/news`);
-      setNewsItems(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
+  const ProtectedRoute = ({ element, redirectTo, path }) => {
+    if (!currentUser) {
+      return <Navigate to={redirectTo} />;
     }
-  }, []);
 
-  const filteredNews = useMemo(() => {
-    return newsItems.filter((item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [newsItems, searchQuery]);
-
-  useEffect(() => {
-    if (searchQuery.length > 0) {
-      setFilteredNewsItems(filteredNews);
-    } else {
-      setFilteredNewsItems(newsItems);
+    // if the user is authenticated and tries to access the landing page, redirect them to the home page
+    if (path === "/") {
+      return <Navigate to="/home" />;
     }
-  }, [filteredNews, newsItems, searchQuery]);
 
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+    return element;
+  };
 
   return (
-    <NewsContextProvider
-      value={{
-        newsItems,
-        setNewsItems,
-        isLoading,
-        setLoading,
-        fetchNews,
-        setSearchQuery,
-        searchQuery,
-        filteredNewsItems,
-        setFilteredNewsItems,
-      }}
-    >
+    <div>
       <Navbar />
-      <Hero />
-      <Brands />
-      <NewsPage key={filteredNewsItems.length} />
-    </NewsContextProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <ProtectedRoute
+            path="/"
+            element={
+              <NewsContextProvider>
+                <QueryClientProvider client={queryClient}>
+                  <Routes>
+                    <Route path="/home" element={<Home />} />
+                    <Route path="/profile" element={<Profile />} />
+                  </Routes>
+                </QueryClientProvider>
+              </NewsContextProvider>
+            }
+            redirectTo="/login"
+          />
+        </Routes>
+      </Router>
+    </div>
   );
-};
+}
 
 export default App;
