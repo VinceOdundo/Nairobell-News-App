@@ -1,10 +1,9 @@
-import { Link } from "react-router-dom"; // Assuming you're using React Router
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import history from react-router-dom
+import { Link, useNavigate } from "react-router-dom"; // Import history from react-router-dom
 import { NewsContext } from "../../contexts/NewsContext";
-import { useContext } from "react";
 import Logo from "../assets/logo.svg";
 import Cookies from "js-cookie"; // Import js-cookie library
+import { useContext, useState } from "react";
 
 const languages = [
   { code: "en", name: "English" },

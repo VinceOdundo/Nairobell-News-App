@@ -37,27 +37,25 @@ function App() {
   return (
     <div>
       <Navbar />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <ProtectedRoute
-            path="/"
-            element={
-              <NewsContextProvider>
-                <QueryClientProvider client={queryClient}>
-                  <Routes>
-                    <Route path="/home" element={<Home />} />
-                    <Route path="/profile" element={<Profile />} />
-                  </Routes>
-                </QueryClientProvider>
-              </NewsContextProvider>
-            }
-            redirectTo="/login"
-          />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <ProtectedRoute
+          path="/"
+          element={
+            <NewsContextProvider>
+              <QueryClientProvider client={queryClient}>
+                <Routes>
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Routes>
+              </QueryClientProvider>
+            </NewsContextProvider>
+          }
+          redirectTo="/login"
+        />
+      </Routes>
     </div>
   );
 }
