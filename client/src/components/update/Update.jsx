@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { makeRequest } from "../../../axios";
+import { makeRequest } from "../../axios";
 
 const Update = ({ setOpenUpdate, user }) => {
   const [inputs, setInputs] = useState({

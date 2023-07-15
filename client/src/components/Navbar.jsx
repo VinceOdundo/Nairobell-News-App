@@ -1,8 +1,8 @@
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom"; // Import history from react-router-dom
-import { NewsContext } from "../../contexts/NewsContext";
+import { Link, useNavigate } from "react-router-dom";
+import { NewsContext } from "../contexts/NewsContext";
 import Logo from "../assets/logo.svg";
-import Cookies from "js-cookie"; // Import js-cookie library
+import Cookies from "js-cookie";
 import { useContext, useState } from "react";
 
 const languages = [
@@ -29,7 +29,7 @@ function Navbar() {
   const [language, setLanguage] = useState("en");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const history = useNavigate(); // Use history from react-router-dom
+  const history = useNavigate();
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -41,15 +41,11 @@ function Navbar() {
 
   const handleTranslate = async () => {
     try {
-      // Get the current article index from the context
       const currentIndex = articles.findIndex(
         (article) => article.id === currentArticleId
       );
-      // Get the original content of the current article
       const originalContent = articles[currentIndex].original;
-      // Check if the translated content for the selected language already exists
       if (articles[currentIndex][language]) {
-        // If yes, set the content to the translated version
         setArticles([
           ...articles.slice(0, currentIndex),
           {
@@ -59,13 +55,12 @@ function Navbar() {
           ...articles.slice(currentIndex + 1),
         ]);
       } else {
-        // If not, call the Google Translate API
         const response = await axios.post(
           "https://translation.googleapis.com/language/translate/v2",
           {
             q: originalContent,
             target: language,
-            key: "AIzaSyDsyyoGe1RN71YkNmeU32aso_a-bSdFuPA", // Use environment variable for API key
+            key: "AIzaSyDsyyoGe1RN71YkNmeU32aso_a-bSdFuPA",
           }
         );
         const translatedContent =
@@ -121,7 +116,6 @@ function Navbar() {
             onChange={handleSearch}
           />
           <button type="submit" className="absolute right-0 top-0 mt-3 mr-2">
-            {/* Code for the search icon */}
             <svg
               className="text-gray-600 h-4 w-4 fill-current"
               xmlns="http://www.w3.org/2000/svg"

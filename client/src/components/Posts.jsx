@@ -1,6 +1,6 @@
 import Post from "./post";
 import { useQuery } from "@tanstack/react-query";
-import { makeRequest } from "../../axios";
+import { makeRequest } from "../axios";
 import { useState, useEffect } from "react"; // import useState and useEffect hooks
 import {
   Tabs,

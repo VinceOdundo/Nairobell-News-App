@@ -1,25 +1,21 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import React, { useContext } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/home";
 import Landing from "./pages/landing";
 import Profile from "./pages/profile";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { AuthContext } from "../contexts/authContext";
-import { useContext } from "react";
-import { NewsContextProvider } from "../contexts/NewsContext";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { AuthContext } from "./contexts/authContext";
+import { NewsContext } from "./contexts/NewsContext";
 
 function App() {
   const { currentUser } = useContext(AuthContext);
+  const { setSearchQuery } = useContext(NewsContext);
 
-  const queryClient = new QueryClient();
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
 
   const ProtectedRoute = ({ element, redirectTo, path }) => {
     if (!currentUser) {
@@ -36,7 +32,7 @@ function App() {
 
   return (
     <div>
-      <Navbar />
+      <Navbar onSearch={handleSearch} />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -44,14 +40,10 @@ function App() {
         <ProtectedRoute
           path="/"
           element={
-            <NewsContextProvider>
-              <QueryClientProvider client={queryClient}>
-                <Routes>
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/profile" element={<Profile />} />
-                </Routes>
-              </QueryClientProvider>
-            </NewsContextProvider>
+            <Routes>
+              <Route path="/home" element={<Home />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
           }
           redirectTo="/login"
         />

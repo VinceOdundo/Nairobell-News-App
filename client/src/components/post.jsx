@@ -2,9 +2,9 @@ import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlin
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import moment from "moment";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { makeRequest } from "../../axios";
+import { makeRequest } from "../axios";
 import { useContext } from "react";
-import { AuthContext } from "../../contexts/authContext";
+import { AuthContext } from "../contexts/authContext";
 
 const Post = ({ post }) => {
   const { currentUser } = useContext(AuthContext);

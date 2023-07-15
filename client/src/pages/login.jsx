@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../contexts/authContext";
-import { makeRequest } from "../../axios";
+import { AuthContext } from "../contexts/authContext";
+import { makeRequest } from "../axios";
 
 const Login = () => {
   const [inputs, setInputs] = useState({
