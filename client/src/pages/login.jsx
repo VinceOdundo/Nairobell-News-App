@@ -5,7 +5,7 @@ import axios from "axios";
 
 const Login = () => {
   const [inputs, setInputs] = useState({
-    email: "", // change username to email
+    username: "", // change username to username
     password: "",
   });
   const [err, setErr] = useState(null);
@@ -19,9 +19,16 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    // try {
+    //   ///  delete dummy Auth
+    //   await login(inputs);
+    //   navigate("/home");
+    // } catch (err) {
+    //   setErr(err.response.data);
+    // }
 
     // validate inputs before sending
-    if (!inputs.email || !inputs.password) {
+    if (!inputs.username || !inputs.password) {
       setErr("Please fill in all the fields");
       return;
     }
@@ -38,7 +45,11 @@ const Login = () => {
       navigate("/");
     } catch (err) {
       // handle error case
-      setErr(err.response.data);
+      if (err.response) {
+        setErr(err.response.data);
+      } else {
+        setErr("An error occurred while sending the login request");
+      }
     }
   };
 
@@ -64,9 +75,9 @@ const Login = () => {
           <h1 className="text-gray-700 font-bold">Login</h1>
           <form className="flex flex-col gap-8">
             <input
-              type="email"
-              placeholder="Email" // change placeholder to Email
-              name="email" // change name to email
+              type="text"
+              placeholder="Username"
+              name="username"
               onChange={handleChange}
               className="border-none border-b border-gray-300 py-4 px-2"
             />
