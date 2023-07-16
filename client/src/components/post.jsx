@@ -61,15 +61,7 @@ const Post = ({ post }) => {
           <p className="text-gray-400 text-md font-bold mb-4">
             {moment(post.date).fromNow()}
           </p>
-          <a
-            href={post.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-blue-500 text-blue-500 py-2 px-4 rounded-md hover:bg-blue-500 hover:text-white transition-all duration-200"
-          >
-            Read More
-          </a>
-          <div className="flex items-center gap-10 cursor-pointer text-sm">
+          <div className="flex cursor-pointer text-bold">
             {isLoading ? (
               "loading"
             ) : currentUser && data.includes(currentUser.id) ? (
@@ -80,8 +72,16 @@ const Post = ({ post }) => {
             ) : (
               <FavoriteBorderOutlinedIcon onClick={handleBookmark} />
             )}
-            {data?.length} Bookmarks
+            {data?.length}
           </div>
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-blue-500 text-blue-500 py-2 px-4 rounded-md hover:bg-blue-500 hover:text-white transition-all duration-200"
+          >
+            Read More
+          </a>
         </div>
       </div>
     </div>

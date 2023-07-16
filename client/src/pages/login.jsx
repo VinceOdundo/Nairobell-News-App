@@ -33,24 +33,34 @@ const Login = () => {
       return;
     }
 
-    try {
-      // use async/await with try/catch
-      const response = await axios.post(
-        "http://localhost:8800/api/auth/login",
-        inputs
-      );
+    axios
+      .post("http://localhost:8800/api/auth/login", inputs)
+      .then((res) => {
+        console.log(res.data);
+        navigate("/");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
 
-      // handle success case
-      await login(response.data);
-      navigate("/");
-    } catch (err) {
-      // handle error case
-      if (err.response) {
-        setErr(err.response.data);
-      } else {
-        setErr("An error occurred while sending the login request");
-      }
-    }
+    // try {
+    //   // use async/await with try/catch
+    //   const response = await axios.post(
+    //     "http://localhost:8800/api/auth/login",
+    //     inputs
+    //   );
+
+    //   // handle success case
+    //   await login(response.data);
+    // navigate("/");
+    // } catch (err) {
+    //   // handle error case
+    //   if (err.response) {
+    //     setErr(err.response.data);
+    //   } else {
+    //     setErr("An error occurred while sending the login request");
+    //   }
+    // }
   };
 
   console.log(err);
