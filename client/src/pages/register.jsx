@@ -62,58 +62,47 @@ const Register = () => {
   return (
     <div className="h-screen bg-purple-300 flex items-center justify-center">
       <div className="w-1/2 flex bg-white rounded-lg overflow-hidden">
-        <div className="flex-1 bg-gradient-to-r from-purple-900 to-purple-700 p-12 flex flex-col gap-8 text-white">
-          <h1 className="text-9xl font-bold">Lama Social.</h1>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero cum,
-            alias totam numquam ipsa exercitationem dignissimos, error nam,
-            consequatur.
-          </p>
-          <span className="text-sm">Do you have an account?</span>
-          <Link to="/login">
-            <button className="w-1/2 py-2 border-none bg-white text-purple-800 font-bold hover:bg-purple-100">
-              Login
-            </button>
-          </Link>
-        </div>
         <div className="flex-1 p-12 flex flex-col gap-12 justify-center">
-          <h1 className="text-gray-700">Register</h1>
+          <h1 className="text-gray-700 font-bold">Register</h1>
           <form className="flex flex-col gap-8">
+            <div class="flex">
+              <input
+                type="text"
+                placeholder="First Name"
+                name="firstName"
+                onChange={handleChange}
+                class="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-4 px-2"
+              />
+              <input
+                type="text"
+                placeholder="Last Name"
+                name="lastName"
+                onChange={handleChange}
+                class="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-2 px-2"
+              />
+            </div>
             <input
               type="text"
               placeholder="Username"
               name="username"
               onChange={handleChange}
-              className="border-none border-b border-gray-300 py-4 px-2"
+              className="border-none h-1/2 border-b border-gray-300 py-2 px-2"
             />
             <input
               type="email"
               placeholder="Email"
               name="email"
               onChange={handleChange}
-              className="border-none border-b border-gray-300 py-4 px-2"
+              className="border-none h-1/2 border-b border-gray-300 py-2 px-2"
             />
             <input
               type="password"
               placeholder="Password"
               name="password"
               onChange={handleChange}
-              className="border-none border-b border-gray-300 py-4 px-2"
+              className="border-none h-1/2 border-b border-gray-300 py-2 px-2"
             />
-            <input
-              type="text"
-              placeholder="First Name"
-              name="firstName"
-              onChange={handleChange}
-              className="border-none border-b border-gray-300 py-4 px-2"
-            />
-            <input
-              type="text"
-              placeholder="Last Name"
-              name="lastName"
-              onChange={handleChange}
-              className="border-none border-b border-gray-300 py-4 px-2"
-            />
+
             {err && (
               <div
                 className="text-red-500"
@@ -127,6 +116,19 @@ const Register = () => {
               Register
             </button>
           </form>
+        </div>
+        <div className="flex-1 bg-gradient-to-r from-purple-900 to-purple-700 p-12 flex flex-col gap-8 text-white">
+          <h1 className="text-5xl font-bold">Join Nairobell.</h1>
+          <p>
+            Leverage on AI to find and read the stories that match your
+            interests and preferences. Register now and start reading.🌍
+          </p>
+          <span className="text-sm">Do you have an account?</span>
+          <Link to="/login">
+            <button className="w-1/2 py-2 border-none bg-white text-purple-800 font-bold hover:bg-purple-100">
+              Login
+            </button>
+          </Link>
         </div>
       </div>
     </div>

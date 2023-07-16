@@ -97,9 +97,9 @@ function Navbar() {
         <div className="flex items-center flex-shrink-0 text-gray-800 mr-16">
           <img src={Logo} alt="Logo" className="w-96 h-32" />
         </div>
-        <div className="block lg:hidden">
-          {/* Code for the mobile menu button */}
-        </div>
+        {/* <div className="block lg:hidden">
+          // Code for the mobile menu button
+        </div> */}
       </div>
 
       <div className="menu w-full lg:block flex-grow lg:flex lg:items-center lg:w-auto lg:px-3 px-8">

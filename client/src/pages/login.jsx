@@ -45,11 +45,10 @@ const Login = () => {
     <div className="h-screen bg-purple-300 flex items-center justify-center">
       <div className="w-1/2 flex bg-white rounded-lg overflow-hidden">
         <div className="flex-1 bg-gradient-to-r from-purple-900 to-purple-700 p-12 flex flex-col gap-8 text-white">
-          <h1 className="text-9xl font-bold">Hello World.</h1>
+          <h1 className="text-5xl font-bold">Karibu Nairobell.</h1>
           <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero cum,
-            alias totam numquam ipsa exercitationem dignissimos, error nam,
-            consequatur.
+            Discover new and important stories from Africa now. Log in and find
+            out what’s happening.🌍
           </p>
           <span className="text-sm">Don't you have an account?</span>
           <Link to="/register">
@@ -59,7 +58,7 @@ const Login = () => {
           </Link>
         </div>
         <div className="flex-1 p-12 flex flex-col gap-12 justify-center">
-          <h1 className="text-gray-700">Login</h1>
+          <h1 className="text-gray-700 font-bold">Login</h1>
           <form className="flex flex-col gap-8">
             <input
               type="email"
