@@ -97,9 +97,9 @@ function Navbar() {
         <div className="flex items-center flex-shrink-0 text-gray-800 mr-16">
           <img src={Logo} alt="Logo" className="w-96 h-32" />
         </div>
-        {/* <div className="block lg:hidden">
-          // Code for the mobile menu button
-        </div> */}
+        <div className="block lg:hidden">
+          {/* Code for the mobile menu button */}
+        </div>
       </div>
 
       <div className="menu w-full lg:block flex-grow lg:flex lg:items-center lg:w-auto lg:px-3 px-8">
@@ -158,21 +158,18 @@ function Navbar() {
               <select
                 value={language}
                 onChange={handleLanguageChange}
-                className="block text-md px-4 py-2 rounded text-blue-700 ml-2 font-bold hover:text-white mt-4 hover:bg-blue-700 lg:mt-0"
+                className="block text-md px-4 ml-2 py-2 rounded text-white border-2 border-blue-700 bg-blue-700 font-bold hover:text-blue-700 hover:border-2 hover:border-blue-700 hover:bg-white lg:mt-0"
               >
                 {languages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
+                  <option
+                    key={lang.code}
+                    value={lang.code}
+                    onClick={() => handleTranslate(lang.code)}
+                  >
                     {lang.name}
                   </option>
                 ))}
               </select>
-
-              <button
-                onClick={handleTranslate}
-                className="block text-md px-4 ml-2 py-2 rounded text-white border-2 border-blue-700 bg-blue-700 font-bold hover:text-blue-700 hover:border-2 hover:border-blue-700 hover:bg-white lg:mt-0"
-              >
-                Translate
-              </button>
             </>
           )}
         </div>
