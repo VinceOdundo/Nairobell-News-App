@@ -51,7 +51,7 @@ async function generateNews(postModel) {
       if (cachedResponse) {
         response = { data: cachedResponse };
       } else {
-        response = await axios.get(url, { timeout: 10000 });
+        response = await axios.get(url, { timeout: 40000 });
         rssCache.set(url, response.data, 3600); // Cache the response for one hour
       }
       const $ = cheerio.load(response.data, { xmlMode: true });

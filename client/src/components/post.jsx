@@ -2,7 +2,7 @@ import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlin
 import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import moment from "moment";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { makeRequest } from "../axios";
+import axios from "axios";
 import { useContext } from "react";
 import { AuthContext } from "../contexts/authContext";
 
@@ -10,17 +10,22 @@ const Post = ({ post }) => {
   const { currentUser } = useContext(AuthContext);
 
   const { isLoading, error, data } = useQuery(["bookmarks", post.id], () =>
-    makeRequest.get("/bookmarks?postId=" + post.id).then((res) => {
-      return res.data;
-    })
+    axios
+      .get("http://localhost:8800/api/bookmarks?post_id=" + post.id)
+      .then((res) => {
+        return res.data;
+      })
   );
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
     (bookmarked) => {
-      if (bookmarked) return makeRequest.delete("/bookmarks?postId=" + post.id);
-      return makeRequest.post("/bookmarks", { postId: post.id });
+      if (bookmarked)
+        return axios.delete(
+          "http://localhost:8800/api/bookmarks?post_id=" + post.id
+        );
+      return axios.post("/bookmarks", { post_id: post.id });
     },
     {
       onSuccess: () => {
@@ -31,17 +36,21 @@ const Post = ({ post }) => {
   );
 
   const handleBookmark = () => {
-    mutation.mutate(data.includes(currentUser.id));
+    if (currentUser) {
+      mutation.mutate(data.includes(currentUser.id));
+    } else {
+      alert("Please log in to use the bookmark feature");
+    }
   };
 
   return (
     <div
-      key={post.postId}
+      key={post.id}
       className="rounded-lg overflow-hidden shadow-lg bg-gray-800 hover:shadow-xl transition-all duration-300"
     >
       <a href={post.url} target="_blank" rel="noopener noreferrer">
         <img
-          src={"../" + post.thumbnail}
+          src={post.thumbnail}
           alt={post.title}
           className="w-full h-48 object-cover object-center"
         />
@@ -63,7 +72,7 @@ const Post = ({ post }) => {
           <div className="flex items-center gap-10 cursor-pointer text-sm">
             {isLoading ? (
               "loading"
-            ) : data.includes(currentUser.id) ? (
+            ) : currentUser && data.includes(currentUser.id) ? (
               <FavoriteOutlinedIcon
                 style={{ color: "red" }}
                 onClick={handleBookmark}

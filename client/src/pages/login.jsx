@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/authContext";
-import { makeRequest } from "../axios";
+import axios from "axios";
 
 const Login = () => {
   const [inputs, setInputs] = useState({
@@ -28,7 +28,10 @@ const Login = () => {
 
     try {
       // use async/await with try/catch
-      const response = await makeRequest.post("auth/login", inputs);
+      const response = await axios.post(
+        "http://localhost:8800/api/auth/login",
+        inputs
+      );
 
       // handle success case
       await login(response.data);

@@ -65,20 +65,20 @@ const Register = () => {
         <div className="flex-1 p-12 flex flex-col gap-12 justify-center">
           <h1 className="text-gray-700 font-bold">Register</h1>
           <form className="flex flex-col gap-8">
-            <div class="flex">
+            <div className="flex">
               <input
                 type="text"
                 placeholder="First Name"
                 name="firstName"
                 onChange={handleChange}
-                class="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-4 px-2"
+                className="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-4 px-2"
               />
               <input
                 type="text"
                 placeholder="Last Name"
                 name="lastName"
                 onChange={handleChange}
-                class="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-2 px-2"
+                className="w-1/2 h-1/2 flex-1 border-none border-b border-gray-300 py-2 px-2"
               />
             </div>
             <input

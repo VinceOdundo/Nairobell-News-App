@@ -46,13 +46,10 @@ const Posts = () => {
     },
   ];
 
-  // initialize state for selected category
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
 
-  // initialize state for number of posts to show
-  const [numOfPosts, setNumOfPosts] = useState(12); // add state for number of posts
+  const [numOfPosts, setNumOfPosts] = useState(12);
 
-  // fetch posts of selected category with react query
   const { isLoading, error, data } = useQuery(
     ["posts", selectedCategory.value], // provide a unique key for each category
     () =>
@@ -61,7 +58,6 @@ const Posts = () => {
         .then((res) => res.data)
   );
 
-  // reset numOfPosts to 12 when selectedCategory changes
   useEffect(() => {
     setNumOfPosts(12);
   }, [selectedCategory]);
