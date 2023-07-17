@@ -22,10 +22,13 @@ const Post = ({ post }) => {
   const mutation = useMutation(
     (bookmarked) => {
       if (bookmarked)
-        return axios.delete(
-          "http://localhost:8800/api/bookmarks?post_id=" + post.id
-        );
-      return axios.post("/bookmarks", { post_id: post.id });
+        return axios.delete("http://localhost:8800/api/bookmarks", {
+          post_id: post.id,
+        });
+      console.log(post.id);
+      return axios.post("http://localhost:8800/api/bookmarks", {
+        post_id: post.id,
+      });
     },
     {
       onSuccess: () => {

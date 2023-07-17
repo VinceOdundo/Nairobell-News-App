@@ -37,6 +37,11 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
 
+// Knowing the endpoints
+import expressListEndpoints from "express-list-endpoints";
+const endpoints = expressListEndpoints(app);
+console.log(endpoints);
+
 // Start the server
 app.listen(8800, () => {
   console.log("API working!");

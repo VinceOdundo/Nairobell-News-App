@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../contexts/authContext";
+import { useAuthContext } from "../contexts/authContext";
 import axios from "axios";
 
 const Login = () => {
@@ -15,7 +15,7 @@ const Login = () => {
   const handleChange = (e) => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-  const { login } = useContext(AuthContext);
+  const { setCurrentUser } = useAuthContext();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,34 +36,22 @@ const Login = () => {
     axios
       .post("http://localhost:8800/api/auth/login", inputs)
       .then((res) => {
-        console.log(res.data);
-        navigate("/");
+        // console.log(res.data);
+        setCurrentUser(res.data);
+        navigate("/home");
       })
       .catch((err) => {
         console.log(err);
       });
-
-    // try {
-    //   // use async/await with try/catch
-    //   const response = await axios.post(
-    //     "http://localhost:8800/api/auth/login",
-    //     inputs
-    //   );
-
-    //   // handle success case
-    //   await login(response.data);
-    // navigate("/");
-    // } catch (err) {
-    //   // handle error case
-    //   if (err.response) {
-    //     setErr(err.response.data);
-    //   } else {
-    //     setErr("An error occurred while sending the login request");
-    //   }
-    // }
   };
 
-  console.log(err);
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     navigate("/home");
+  //   } else {
+  //     navigate("/login");
+  //   }
+  // }, []);
 
   return (
     <div className="h-screen bg-purple-300 flex items-center justify-center">

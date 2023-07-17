@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { NewsContext } from "../contexts/NewsContext";
 import Logo from "../assets/logo.svg";
 import Cookies from "js-cookie";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
+import { useAuthContext } from "../contexts/authContext";
 
 const languages = [
   { code: "en", name: "English" },
@@ -28,8 +29,19 @@ function Navbar() {
 
   const [language, setLanguage] = useState("en");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { currentUser, setCurrentUser } = useAuthContext();
 
-  const history = useNavigate();
+  console.log(currentUser);
+
+  useEffect(() => {
+    if (currentUser) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, [currentUser]);
+
+  const navigate = useNavigate();
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -86,10 +98,25 @@ function Navbar() {
   };
 
   const handleLogOut = () => {
-    Cookies.remove("authToken"); // Use cookies to remove the authToken
-    setIsLoggedIn(false);
-    history.push("/");
+    axios
+      .post("http://localhost:8800/api/auth/logout")
+      .then((res) => {
+        console.log(res.data);
+      })
+      .then(() => {
+        Cookies.remove("authToken"); // Use cookies to remove the authToken
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+        navigate("/");
+      });
+    // Cookies.remove("authToken"); // Use cookies to remove the authToken
+    // setIsLoggedIn(false);
+    // setCurrentUser(null);
+    // // localStorage.removeItem("user");
+    // navigate("/");
   };
+
+  useEffect(() => {}, []);
 
   return (
     <nav className="flex items-center justify-between flex-wrap bg-white py-4 lg:px-12 shadow border-solid">
@@ -129,15 +156,15 @@ function Navbar() {
           </button>
         </form>
         <div className="flex">
-          {isLoggedIn ? (
+          {currentUser ? (
             <>
               <div className="flex items-center gap-2 font-medium hidden md:flex">
                 <img
-                  src={user.profilePicture}
-                  alt={user.username}
+                  src={currentUser.profilePicture}
+                  alt={currentUser.username}
                   className="w-10 h-10 rounded-full border-2 border-white" // adjust the width, height and border as needed
                 />
-                <span>{user.name}</span>
+                <span>{currentUser.name}</span>
               </div>
               <button
                 onClick={handleLogOut}

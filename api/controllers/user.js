@@ -1,19 +1,37 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
-export const getUser = async (req, res) => {
-  const userId = req.params.userId;
+// export const getUser = async (req, res) => {
+//   const userId = req.params.userId;
 
-  // Use the findById method of the User model here
-  const user = await User.findById(userId);
+//   // Use the findById method of the User model here
+//   const user = await User.findById(userId);
 
-  if (user) {
-    // Destructure the password property and return the rest of the info
-    const { password, ...info } = user;
-    return res.json(info);
-  } else {
-    return res.status(404).json("User not found");
-  }
+//   if (user) {
+//     // Destructure the password property and return the rest of the info
+//     const { password, ...info } = user;
+//     return res.json(info);
+//   } else {
+//     return res.status(404).json("User not found");
+//   }
+// };
+
+export const getUser = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) return res.status(401).json("Not authenticated!");
+
+  jwt.verify(token, "secretkey", async (err, userInfo) => {
+    if (err) return res.status(403).json("Token is not valid!");
+
+    // Use the findById method of the User model here
+    const user = await User.findById(userInfo.id);
+
+    if (user) {
+      return res.json(user);
+    } else {
+      return res.status(404).json("User not found!");
+    }
+  });
 };
 
 export const updateUser = (req, res) => {

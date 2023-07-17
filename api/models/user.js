@@ -63,7 +63,7 @@ class User {
     const q = `SELECT * FROM user WHERE id = $1`;
     const values = [id];
     const result = await db.query(q, values);
-    if (result.rows.length > 0) {
+    if (result.rows && result.rows.length > 0) {
       return new User(result.rows[0]);
     } else {
       return null;
