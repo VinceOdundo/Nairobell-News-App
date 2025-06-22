@@ -4,13 +4,10 @@
   "description": "African News Aggregator built by Africans for Africa",
   "private": true,
   "workspaces": [
-    "client",
-    "api"
+    "client"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:client\"",
-    "dev:api": "cd api && npm run dev",
-    "dev:client": "cd client && npm run dev",
+    "dev": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "preview": "cd client && npm run preview"
   },
