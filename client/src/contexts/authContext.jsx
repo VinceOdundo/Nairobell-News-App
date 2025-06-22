@@ -1,35 +1,18 @@
-import axios from "axios";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
+import { useAuth } from "./AuthContext";
 
-export const AuthContext = createContext({
-  currentUser: null,
-  setCurrentUser: () => {},
-});
+// Use the new AuthContext instead of the old one
+export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  // const [currentUser, setCurrentUser] = useState(
-  //   JSON.parse(localStorage.getItem("user")) || null
-  // );
-  const [currentUser, setCurrentUser] = useState(null);
-
-  const login = async (inputs) => {
-    const res = await axios.post(
-      "http://localhost:8800/api/auth/login",
-      inputs,
-      {
-        withCredentials: true,
-      }
-    );
-
-    setCurrentUser(res.data);
-  };
-
-  // useEffect(() => {
-  //   localStorage.setItem("user", JSON.stringify(currentUser));
-  // }, [currentUser]);
-
+  const auth = useAuth();
+  
   return (
-    <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
+    <AuthContext.Provider value={{ 
+      currentUser: auth.user, 
+      setCurrentUser: () => {}, // Handled by Supabase auth
+      profile: auth.profile 
+    }}>
       {children}
     </AuthContext.Provider>
   );
