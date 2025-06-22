@@ -1,17 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Clock, 
-  Eye, 
-  Bookmark, 
-  BookmarkCheck,
-  Share2, 
-  MessageCircle, 
-  TrendingUp,
-  Globe,
-  Headphones,
-  Zap
-} from 'lucide-react'
+import { Clock, Eye, Bookmark, Bookmark as BookmarkCheck, Share2, MessageCircle, TrendingUp, Globe, Headphones, Zap } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { NewsService } from '../../services/newsService'
 import toast from 'react-hot-toast'
