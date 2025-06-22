@@ -4,7 +4,7 @@ import moment from "moment";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useContext } from "react";
-import { AuthContext } from "../contexts/authContext";
+import { AuthContext } from "../contexts/AuthContextLegacy";
 
 const Post = ({ post }) => {
   const { currentUser } = useContext(AuthContext);

@@ -4,7 +4,7 @@ import { NewsContext } from "../contexts/NewsContext";
 import Logo from "../assets/logo.svg";
 import Cookies from "js-cookie";
 import { useContext, useState, useEffect } from "react";
-import { useAuthContext } from "../contexts/authContext";
+import { useAuthContext } from "../contexts/AuthContextLegacy";
 
 const languages = [
   { code: "en", name: "English" },

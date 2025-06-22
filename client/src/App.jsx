@@ -6,7 +6,7 @@ import Landing from "./pages/landing";
 import Profile from "./pages/profile";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { AuthContext } from "./contexts/authContext";
+import { AuthContext } from "./contexts/AuthContextLegacy";
 import { NewsContext } from "./contexts/NewsContext";
 
 function App() {
