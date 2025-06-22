@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { makeRequest } from "../axios";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
-import { AuthContext } from "../contexts/authContext";
+import { AuthContext } from "../contexts/AuthContextLegacy";
 import Update from "../components/update/Update";
 import { useState } from "react";
 

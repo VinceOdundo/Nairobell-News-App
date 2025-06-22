@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 
 import { AuthProvider } from "./contexts/AuthContext";
-import { AuthContextProvider } from "./contexts/authContext";
+import { AuthContextProvider } from "./contexts/AuthContextLegacy";
 import {BrowserRouter, Router} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
