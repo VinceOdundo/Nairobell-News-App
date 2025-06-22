@@ -1,53 +1,123 @@
-import React, { useContext } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Home from "./pages/home";
-import Landing from "./pages/landing";
-import Profile from "./pages/profile";
-import Login from "./pages/login";
-import Register from "./pages/register";
-import { AuthContext } from "./contexts/AuthContextLegacy";
-import { NewsContext } from "./contexts/NewsContext";
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 
-function App() {
-  const { currentUser } = useContext(AuthContext);
-  const { setSearchQuery } = useContext(NewsContext);
+// Modern components
+import HomePage from './pages/modern/HomePage'
+import AuthPage from './pages/modern/AuthPage'
+import Loading from './components/Loading'
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
+// Create a query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
-  const ProtectedRoute = ({ element, redirectTo, path }) => {
-    if (!currentUser) {
-      return <Navigate to={redirectTo} />;
-    }
-
-    // if the user is authenticated and tries to access the landing page, redirect them to the home page
-    if (path === "/") {
-      return <Navigate to="/home" />;
-    }
-
-    return element;
-  };
-
-  return (
-    <div>
-      <Navbar onSearch={handleSearch} />
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/home"
-          element={!currentUser ? <Navigate to="/login" /> : <Home />}
-        />
-        <Route
-          path="/profile"
-          element={!currentUser ? <Navigate to="/login" /> : <Profile />}
-        />
-      </Routes>
-    </div>
-  );
+// Protected Route component
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading />
+      </div>
+    )
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  
+  return children
 }
 
-export default App;
+// Public Route component (redirects to home if already authenticated)
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth()
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading />
+      </div>
+    )
+  }
+  
+  if (user) {
+    return <Navigate to="/home" replace />
+  }
+  
+  return children
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route 
+        path="/" 
+        element={<HomePage />} 
+      />
+      <Route 
+        path="/login" 
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        } 
+      />
+      <Route 
+        path="/register" 
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        } 
+      />
+      
+      {/* Protected routes */}
+      <Route 
+        path="/home" 
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-gray-50">
+            <AppRoutes />
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+              }}
+            />
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  )
+}
