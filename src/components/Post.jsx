@@ -1,86 +1,94 @@
-import React from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { useNews } from '../contexts/NewsContext'
-import { Bookmark, ExternalLink, Calendar, Tag } from 'lucide-react'
+import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
+import moment from "moment";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContextLegacy";
 
-function Post({ post }) {
-  const { user } = useAuth()
-  const { bookmarks, toggleBookmark } = useNews()
-  const isBookmarked = bookmarks.includes(post.id)
+const Post = ({ post }) => {
+  const { currentUser } = useContext(AuthContext);
+
+  const { isLoading, error, data } = useQuery(["bookmarks", post.id], () =>
+    axios
+      .get("http://localhost:8800/api/bookmarks?post_id=" + post.id)
+      .then((res) => {
+        return res.data;
+      })
+  );
+
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (bookmarked) => {
+      if (bookmarked)
+        return axios.delete("http://localhost:8800/api/bookmarks", {
+          post_id: post.id,
+        });
+      console.log(post.id);
+      return axios.post("http://localhost:8800/api/bookmarks", {
+        post_id: post.id,
+      });
+    },
+    {
+      onSuccess: () => {
+        // Invalidate and refetch
+        queryClient.invalidateQueries(["bookmarks"]);
+      },
+    }
+  );
 
   const handleBookmark = () => {
-    if (user) {
-      toggleBookmark(user.id, post.id)
+    if (currentUser) {
+      mutation.mutate(data.includes(currentUser.id));
+    } else {
+      alert("Please log in to use the bookmark feature");
     }
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+  };
 
   return (
-    <article className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-      {post.image_url && (
+    <div
+      key={post.id}
+      className="rounded-lg overflow-hidden shadow-lg bg-gray-800 hover:shadow-xl transition-all duration-300"
+    >
+      <a href={post.url} target="_blank" rel="noopener noreferrer">
         <img
-          src={post.image_url}
+          src={post.thumbnail}
           alt={post.title}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-cover object-center"
         />
-      )}
-      
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center text-sm text-gray-500">
-            <Calendar className="w-4 h-4 mr-1" />
-            {formatDate(post.created_at)}
+      </a>
+      <div className="p-4">
+        <h2 className="text-xl font-bold mb-2 text-white">{post.title}</h2>
+        <div className="flex justify-between items-center mt-2">
+          <p className="text-gray-400 text-md font-bold mb-4">
+            {moment(post.date).fromNow()}
+          </p>
+          <div className="flex cursor-pointer text-bold">
+            {isLoading ? (
+              "loading"
+            ) : currentUser && data.includes(currentUser.id) ? (
+              <FavoriteOutlinedIcon
+                style={{ color: "red" }}
+                onClick={handleBookmark}
+              />
+            ) : (
+              <FavoriteBorderOutlinedIcon onClick={handleBookmark} />
+            )}
+            {data?.length}
           </div>
-          {user && (
-            <button
-              onClick={handleBookmark}
-              className={`p-2 rounded-full transition-colors ${
-                isBookmarked
-                  ? 'text-orange-600 bg-orange-50'
-                  : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
-              }`}
-            >
-              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-            </button>
-          )}
-        </div>
-
-        <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
-          {post.title}
-        </h2>
-
-        <p className="text-gray-600 mb-4 line-clamp-3">
-          {post.description}
-        </p>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-sm text-gray-500">
-            <Tag className="w-4 h-4 mr-1" />
-            {post.source || 'African News'}
-          </div>
-
-          {post.url && (
-            <a
-              href={post.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-orange-600 hover:text-orange-700 text-sm font-medium"
-            >
-              Read More
-              <ExternalLink className="w-4 h-4 ml-1" />
-            </a>
-          )}
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-blue-500 text-blue-500 py-2 px-4 rounded-md hover:bg-blue-500 hover:text-white transition-all duration-200"
+          >
+            Read More
+          </a>
         </div>
       </div>
-    </article>
-  )
-}
+    </div>
+  );
+};
 
-export default Post
+export default Post;

@@ -1,120 +1,106 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { Newspaper, Mail, Lock } from 'lucide-react'
+import { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthContext } from "../contexts/AuthContextLegacy";
+import axios from "axios";
 
-function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
-  const navigate = useNavigate()
+const Login = () => {
+  const [inputs, setInputs] = useState({
+    username: "", // change username to username
+    password: "",
+  });
+  const [err, setErr] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+  const navigate = useNavigate();
 
-    try {
-      const { error } = await signIn(email, password)
-      if (error) throw error
-      navigate('/home')
-    } catch (error) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
+  const handleChange = (e) => {
+    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  const { setCurrentUser } = useAuthContext();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    // try {
+    //   ///  delete dummy Auth
+    //   await login(inputs);
+    //   navigate("/home");
+    // } catch (err) {
+    //   setErr(err.response.data);
+    // }
+
+    // validate inputs before sending
+    if (!inputs.username || !inputs.password) {
+      setErr("Please fill in all the fields");
+      return;
     }
-  }
+
+    axios
+      .post("http://localhost:8800/api/auth/login", inputs)
+      .then((res) => {
+        // console.log(res.data);
+        setCurrentUser(res.data);
+        navigate("/home");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     navigate("/home");
+  //   } else {
+  //     navigate("/login");
+  //   }
+  // }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <Newspaper className="h-12 w-12 text-orange-600" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          Sign in to Nairobell
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/register" className="font-medium text-orange-600 hover:text-orange-500">
-            create a new account
+    <div className="h-screen bg-purple-300 flex items-center justify-center">
+      <div className="w-1/2 flex bg-white rounded-lg overflow-hidden">
+        <div className="flex-1 bg-gradient-to-r from-purple-900 to-purple-700 p-12 flex flex-col gap-8 text-white">
+          <h1 className="text-5xl font-bold">Karibu Nairobell.</h1>
+          <p>
+            Discover new and important stories from Africa now. Log in and find
+            out what’s happening.🌍
+          </p>
+          <span className="text-sm">Don't you have an account?</span>
+          <Link to="/register">
+            <button className="w-1/2 py-2 border-none bg-white text-purple-800 font-bold hover:bg-purple-100">
+              Register
+            </button>
           </Link>
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
+        </div>
+        <div className="flex-1 p-12 flex flex-col gap-12 justify-center">
+          <h1 className="text-gray-700 font-bold">Login</h1>
+          <form className="flex flex-col gap-8">
+            <input
+              type="text"
+              placeholder="Username"
+              name="username"
+              onChange={handleChange}
+              className="border-none border-b border-gray-300 py-4 px-2"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              name="password"
+              onChange={handleChange}
+              className="border-none border-b border-gray-300 py-4 px-2"
+            />
+            {err && (
+              // display error message in a styled component
+              <div className="text-red-500">{err}</div>
             )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
-            </div>
+            <button
+              onClick={handleLogin}
+              className="w-1/2 py-2 border-none bg-purple-400 text-white font-bold hover:bg-purple-500"
+            >
+              Login
+            </button>
           </form>
-
-          <div className="mt-6">
-            <div className="text-center">
-              <Link to="/" className="text-sm text-orange-600 hover:text-orange-500">
-                ← Back to home
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

@@ -1,69 +1,95 @@
-import React from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import Navbar from '../components/Navbar'
-import { User, Mail, LogOut } from 'lucide-react'
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { makeRequest } from "../axios";
+import { useLocation } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContextLegacy";
+import Update from "../components/update/Update";
+import { useState } from "react";
 
-function Profile() {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
+const Profile = () => {
+  // initialize state for update component
+  const [openUpdate, setOpenUpdate] = useState(false);
+  // initialize state for modal component
+  const [openModal, setOpenModal] = useState(false); // add state for modal component
+  // get current user from context
+  const { currentUser } = useContext(AuthContext);
+  // get user ID from URL
+  const userId = parseInt(useLocation().pathname.split("/")[2]);
+  // fetch user data with react query
+  const { isLoading, error, data } = useQuery(["user", userId], () =>
+    makeRequest.get(`/users/find/${userId}`).then((res) => {
+      return res.data;
+    })
+  );
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  if (!user) {
-    navigate('/login')
-    return null
-  }
-
+  // fetch bookmark data with react query
+  const { isLoading: rIsLoading, data: bookmarkData } = useQuery(
+    ["bookmark"],
+    () =>
+      makeRequest.get(`/bookmarks?post_id=${userId}`).then((res) => {
+        return res.data;
+      })
+  );
+  // get query client for invalidation
+  const queryClient = useQueryClient();
+  // create mutation function for bookmarking
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-sm p-8">
-          <div className="text-center mb-8">
-            <div className="mx-auto w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-              <User className="w-10 h-10 text-orange-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+    <div className="h-screen bg-purple-300 flex items-center justify-center">
+      {isLoading ? (
+        "loading"
+      ) : (
+        <>
+          <div className="w-full h-72 relative">
+            <div className="w-full h-full bg-gradient-to-r from-blue-100 to-blue-600"></div>
+            <img
+              src={`/upload/${data.profilePic}`}
+              alt=""
+              className="w-48 h-48 rounded-full object-cover absolute left-0 right-0 mx-auto top-48"
+            />
           </div>
+          <div className="w-full p-16 flex flex-col gap-8">
+            <div className="h-44 shadow-lg rounded-lg bg-white text-gray-700 p-12 flex items-center justify-between mb-8">
+              <div className="flex-1 flex flex-col items-center gap-4">
+                <span className="text-xl font-semibold">{data.name}</span>
+                <span className="text-sm text-gray-500">{data.pronouns}</span>
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <Mail className="w-5 h-5 text-gray-400 mr-3" />
-                <span className="text-gray-900">{user.email}</span>
+                {rIsLoading ? (
+                  "loading"
+                ) : userId === currentUser.id ? (
+                  // show update button if own profile
+                  <button
+                    onClick={() => setOpenUpdate(true)}
+                    className="w-1/2 py-2 border-none bg-purple-400 text-white font-bold rounded hover:bg-purple-500"
+                  >
+                    update
+                  </button>
+                ) : (
+                  // show bookmark button and count if other profile
+                  <div className="flex items-center gap-4">
+                    <span
+                      className="text-gray-500 cursor-pointer"
+                      onClick={() => setOpenModal(true)}
+                    >
+                      {bookmarkData.length} bookmarks
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 flex items-center justify-end gap-4">
+                <EmailOutlinedIcon />
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Member Since
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-900">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </button>
           </div>
-        </div>
-      </div>
+          {openModal && ( // render modal component if openModal is true
+            <Modal setOpenModal={setOpenModal} bookmarkData={bookmarkData} />
+          )}
+        </>
+      )}
+      {openUpdate && <Update setOpenUpdate={setOpenUpdate} user={data} />}
     </div>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;

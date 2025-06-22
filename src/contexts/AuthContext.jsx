@@ -1,66 +1,23 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { createContext, useContext } from "react";
+import { useAuth } from "./AuthContext";
 
-const AuthContext = createContext()
+// Use the new AuthContext instead of the old one
+export const AuthContext = createContext();
 
-export function useAuth() {
-  return useContext(AuthContext)
-}
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const signUp = async (email, password) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    return { data, error }
-  }
-
-  const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { data, error }
-  }
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
-  }
-
-  const value = {
-    user,
-    signUp,
-    signIn,
-    signOut,
-    loading
-  }
-
+export const AuthContextProvider = ({ children }) => {
+  const auth = useAuth();
+  
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ 
+      currentUser: auth.user, 
+      setCurrentUser: () => {}, // Handled by Supabase auth
+      profile: auth.profile 
+    }}>
+      {children}
     </AuthContext.Provider>
-  )
+  );
+};
+
+export function useAuthContext() {
+  return useContext(AuthContext);
 }

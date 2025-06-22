@@ -1,31 +1,130 @@
-import React from 'react'
-import { useNews } from '../contexts/NewsContext'
-import Post from './Post'
-import Loading from './Loading'
+import Post from "./post";
+import { useQuery } from "@tanstack/react-query";
+import { makeRequest } from "../../client/src/axios";
+import { useState, useEffect } from "react"; // import useState and useEffect hooks
+import {
+  Tabs,
+  TabsHeader,
+  TabsBody,
+  Tab,
+  TabPanel,
+} from "@material-tailwind/react"; // import tabs components
 
-function Posts() {
-  const { posts, loading } = useNews()
+const Posts = () => {
+  // define categories array
+  const categories = [
+    {
+      label: "Politics",
+      value: "politics",
+      desc: "Posts about politics and current affairs.",
+    },
 
-  if (loading) {
-    return <Loading />
-  }
+    {
+      label: "Entertainment",
+      value: "entertainment",
+      desc: "Posts about movies, music, games, and celebrities.",
+    },
+    {
+      label: "Technology",
+      value: "technology",
+      desc: "Posts about gadgets, software, innovation, and science.",
+    },
+    {
+      label: "Business",
+      value: "business",
+      desc: "Posts about finance, economy, entrepreneurship, and marketing.",
+    },
+    {
+      label: "Health",
+      value: "health",
+      desc: "Posts about wellness, fitness, nutrition, and medicine.",
+    },
+    {
+      label: "Sports",
+      value: "sports",
+      desc: "Posts about athletics, games, competitions, and teams.",
+    },
+  ];
 
-  if (posts.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">No news articles available yet.</p>
-        <p className="text-gray-400 text-sm mt-2">Check back later for updates.</p>
-      </div>
-    )
-  }
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+
+  const [numOfPosts, setNumOfPosts] = useState(12);
+
+  const { isLoading, error, data } = useQuery(
+    ["posts", selectedCategory.value], // provide a unique key for each category
+    () =>
+      makeRequest
+        .get("/posts?category=" + selectedCategory.value)
+        .then((res) => res.data)
+  );
+
+  useEffect(() => {
+    setNumOfPosts(12);
+  }, [selectedCategory]);
+
+  const handleLoadMore = () => {
+    setNumOfPosts((prevNumOfPosts) => prevNumOfPosts + 12);
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {posts.map((post) => (
-        <Post key={post.id} post={post} />
-      ))}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex flex-col posts-center mb-7">
+        <h1 className="text-5xl font-bold mb-2 text-gray-900">
+          <span className="text-blue-600">Today</span> in Africa
+        </h1>
+        <div className="w-40 h-1 bg-blue-600 mb-8"></div>
+      </div>
+      <Tabs id="custom-animation" value={selectedCategory.value}>
+        <TabsHeader>
+          {categories.map(({ label, value }) => (
+            <Tab
+              key={value}
+              value={value}
+              onClick={() =>
+                setSelectedCategory(categories.find((c) => c.value === value))
+              }
+            >
+              {label}
+            </Tab>
+          ))}
+        </TabsHeader>
+        <TabsBody
+          animate={{
+            initial: { y: 250 },
+            mount: { y: 0 },
+            unmount: { y: 250 },
+          }}
+        >
+          {categories.map(({ value, desc }) => (
+            <TabPanel key={value} value={value}>
+              {desc}
+              {error ? (
+                "Something went wrong!"
+              ) : isLoading ? (
+                "loading"
+              ) : (
+                <div className="grid grid-cols-3 gap-4">
+                  {data.slice(0, numOfPosts).map((post) => (
+                    <Post post={post} key={post.id} />
+                  ))}
+                </div>
+              )}
+              {numOfPosts < (data && data.length) && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    className="border border-blue-500 text-blue-500 py-2 px-4 rounded-md hover:bg-blue-500 hover:text-white transition-all duration-200"
+                    onClick={handleLoadMore}
+                  >
+                    Load more
+                  </button>
+                </div>
+              )}
+            </TabPanel>
+          ))}
+        </TabsBody>
+      </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default Posts
+export default Posts;
