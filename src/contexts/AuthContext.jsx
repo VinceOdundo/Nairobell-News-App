@@ -47,50 +47,124 @@ export function AuthProvider({ children }) {
         const { data: userData } = await supabase.auth.getUser();
         const currentUser = userData?.user;
 
-        const { data: newProfile, error: createError } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              id: userId,
-              username:
-                currentUser?.email?.split("@")[0] ||
-                `user_${userId.slice(0, 8)}`,
-              display_name: currentUser?.user_metadata?.full_name || "New User",
-              email: currentUser?.email || "",
-              preferred_language: "en",
-              country: "",
-              region: "",
-            },
-          ])
-          .select()
-          .single();
+        // Ensure we have all required fields with fallbacks
+        let username =
+          currentUser?.email?.split("@")[0] || `user_${userId.slice(0, 8)}`;
+        const displayName =
+          currentUser?.user_metadata?.full_name ||
+          currentUser?.user_metadata?.firstName ||
+          currentUser?.user_metadata?.name ||
+          "New User";
+        const email = currentUser?.email || "";
 
-        if (createError) {
-          console.error("Error creating profile:", createError);
-        } else {
-          setProfile(newProfile);
+        // Validate required fields before inserting
+        if (!email) {
+          console.error("Cannot create profile: email is required");
+          toast.error("Unable to create profile: missing email");
+          return;
+        }
+
+        // Handle potential username conflicts
+        let attempts = 0;
+        let finalUsername = username;
+
+        while (attempts < 5) {
+          try {
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .insert([
+                {
+                  id: userId,
+                  username: finalUsername,
+                  display_name: displayName,
+                  email: email,
+                  preferred_language:
+                    currentUser?.user_metadata?.preferred_language || "en",
+                  country: currentUser?.user_metadata?.country || "",
+                  region: currentUser?.user_metadata?.region || "",
+                  first_name: currentUser?.user_metadata?.firstName || "",
+                  last_name: currentUser?.user_metadata?.lastName || "",
+                },
+              ])
+              .select()
+              .single();
+
+            if (createError) {
+              // If it's a unique constraint violation on username, try with a suffix
+              if (
+                createError.code === "23505" &&
+                createError.message.includes("username")
+              ) {
+                attempts++;
+                finalUsername = `${username}${attempts}`;
+                continue;
+              }
+
+              console.error("Error creating profile:", createError);
+              toast.error(
+                "Failed to create user profile. Please contact support if this persists."
+              );
+              break;
+            } else {
+              setProfile(newProfile);
+              toast.success("Profile created successfully!");
+              break;
+            }
+          } catch (insertError) {
+            console.error("Profile insertion failed:", insertError);
+            if (attempts >= 4) {
+              toast.error(
+                "Profile creation failed. Please try refreshing the page."
+              );
+            }
+            attempts++;
+            finalUsername = `${username}${attempts}`;
+          }
         }
       } else if (error) {
         console.error("Error fetching profile:", error);
+        toast.error("Failed to load user profile");
       } else {
         setProfile(data);
       }
     } catch (error) {
       console.error("Error in fetchProfile:", error);
+      toast.error("An unexpected error occurred while loading your profile");
     }
   };
-
   const signUp = async (email, password, userData) => {
     try {
+      // Ensure we have the required metadata
+      const userMetadata = {
+        full_name:
+          userData?.firstName && userData?.lastName
+            ? `${userData.firstName} ${userData.lastName}`
+            : userData?.firstName || userData?.lastName || "New User",
+        firstName: userData?.firstName || "",
+        lastName: userData?.lastName || "",
+        username: userData?.username || email.split("@")[0],
+        country: userData?.country || "",
+        region: userData?.region || "",
+        preferred_language: userData?.preferredLanguage || "en",
+        ...userData,
+      };
+
+      console.log("Attempting signup with metadata:", userMetadata);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData,
+          data: userMetadata,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase auth signup error:", error);
+        throw error;
+      }
+
+      console.log("Signup successful:", data);
 
       toast.success(
         "Account created successfully! Please check your email to verify your account."
@@ -98,7 +172,7 @@ export function AuthProvider({ children }) {
       return { data, error: null };
     } catch (error) {
       console.error("Sign up error:", error);
-      toast.error(error.message);
+      toast.error(error.message || "An error occurred during signup");
       return { data: null, error };
     }
   };

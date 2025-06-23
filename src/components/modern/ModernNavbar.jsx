@@ -215,11 +215,10 @@ export default function ModernNavbar() {
                   Nairobell
                 </span>
               </motion.div>
-            </Link>
-
+            </Link>{" "}
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              {navItems.map(({ path, label, icon: Icon }) => (
+              {navigationItems.map(({ path, label, icon: Icon }) => (
                 <Link
                   key={path}
                   to={path}
@@ -234,7 +233,6 @@ export default function ModernNavbar() {
                 </Link>
               ))}
             </div>
-
             {/* Search Bar */}
             <div className="hidden md:block flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="relative">
@@ -248,7 +246,6 @@ export default function ModernNavbar() {
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               </form>
             </div>
-
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4">
               {/* Language Selector */}
@@ -402,10 +399,9 @@ export default function ModernNavbar() {
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                </form>
-
+                </form>{" "}
                 {/* Mobile Navigation Items */}
-                {navItems.map(({ path, label, icon: Icon }) => (
+                {navigationItems.map(({ path, label, icon: Icon }) => (
                   <Link
                     key={path}
                     to={path}
