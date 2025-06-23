@@ -1,82 +1,193 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  Menu, 
-  X, 
-  Globe, 
-  User, 
-  Settings, 
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Menu,
+  X,
+  Globe,
+  User,
+  Settings,
   LogOut,
   Bell,
   Bookmark,
   TrendingUp,
-  MapPin
-} from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
+  MapPin,
+  Users,
+  Edit3,
+  Award,
+  Download,
+  Volume2,
+  Languages,
+  Wifi,
+  WifiOff,
+  Star,
+  Zap,
+  MessageCircle,
+  Filter,
+  Moon,
+  Sun,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { AfricanTranslationService } from "../../services/africanTranslationService";
+import { NotificationService } from "../../services/notificationService";
+import { OfflineService } from "../../services/offlineService";
+import { GamificationService } from "../../services/gamificationService";
+import toast from "react-hot-toast";
 
 const AFRICAN_LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
-  { code: 'am', name: 'አማርኛ', flag: '🇪🇹' },
-  { code: 'ha', name: 'Hausa', flag: '🇳🇬' },
-  { code: 'yo', name: 'Yorùbá', flag: '🇳🇬' },
-  { code: 'ig', name: 'Igbo', flag: '🇳🇬' },
-  { code: 'zu', name: 'isiZulu', flag: '🇿🇦' },
-  { code: 'xh', name: 'isiXhosa', flag: '🇿🇦' },
-  { code: 'af', name: 'Afrikaans', flag: '🇿🇦' },
-  { code: 'fr', name: 'Français', flag: '🇨🇮' },
-  { code: 'ar', name: 'العربية', flag: '🇪🇬' },
-  { code: 'pt', name: 'Português', flag: '🇦🇴' }
-]
+  { code: "en", name: "English", flag: "🇬🇧", native: "English" },
+  { code: "sw", name: "Kiswahili", flag: "🇰🇪", native: "Kiswahili" },
+  { code: "am", name: "Amharic", flag: "🇪🇹", native: "አማርኛ" },
+  { code: "ha", name: "Hausa", flag: "🇳🇬", native: "Hausa" },
+  { code: "yo", name: "Yoruba", flag: "🇳🇬", native: "Yorùbá" },
+  { code: "ig", name: "Igbo", flag: "🇳🇬", native: "Igbo" },
+  { code: "zu", name: "Zulu", flag: "🇿🇦", native: "isiZulu" },
+  { code: "xh", name: "Xhosa", flag: "🇿🇦", native: "isiXhosa" },
+  { code: "af", name: "Afrikaans", flag: "🇿🇦", native: "Afrikaans" },
+  { code: "fr", name: "French", flag: "🇨🇮", native: "Français" },
+  { code: "ar", name: "Arabic", flag: "🇪🇬", native: "العربية" },
+  { code: "pt", name: "Portuguese", flag: "🇦🇴", native: "Português" },
+];
 
 export default function ModernNavbar() {
-  const { user, profile, signOut } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
-  const [isScrolled, setIsScrolled] = useState(false)
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // UI State
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Feature State
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [userPoints, setUserPoints] = useState(0);
+  const [userStreak, setUserStreak] = useState(0);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    // Load user preferences and data
+    loadUserData();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [user]);
+
+  const loadUserData = async () => {
+    if (!user) return;
+
+    try {
+      // Load notifications
+      const notificationData = await NotificationService.getUnreadCount(
+        user.id
+      );
+      setUnreadNotifications(notificationData.count);
+
+      // Load gamification data
+      const userStats = await GamificationService.getUserStats(user.id);
+      setUserPoints(userStats.points || 0);
+      setUserStreak(userStats.streak || 0);
+
+      // Load offline queue
+      const queueStatus = await OfflineService.getQueueStatus();
+      setOfflineQueueCount(queueStatus.pendingCount || 0);
+
+      // Load preferences
+      const preferences = await AfricanTranslationService.getUserPreferences(
+        user.id
+      );
+      setSelectedLanguage(preferences.preferredLanguage || "en");
+      setIsAudioEnabled(preferences.audioEnabled || false);
+      setIsDarkMode(preferences.darkMode || false);
+    } catch (error) {
+      console.error("Error loading user data:", error);
     }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  };
 
   const handleSearch = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
-      setSearchQuery('')
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
     }
-  }
+  };
+  const handleLanguageChange = async (langCode) => {
+    try {
+      setSelectedLanguage(langCode);
+      if (user) {
+        await AfricanTranslationService.setUserLanguagePreference(
+          user.id,
+          langCode
+        );
+      }
+      setIsLanguageOpen(false);
 
-  const handleLanguageChange = (langCode) => {
-    setSelectedLanguage(langCode)
-    setIsLanguageOpen(false)
-    // TODO: Implement language change logic
-    toast.success(`Language changed to ${AFRICAN_LANGUAGES.find(l => l.code === langCode)?.name}`)
-  }
+      // Show translation toast
+      const language = AFRICAN_LANGUAGES.find((l) => l.code === langCode);
+      toast.success(`Language changed to ${language.native}`, {
+        icon: language.flag,
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Error changing language:", error);
+      toast.error("Failed to change language");
+    }
+  };
 
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark");
+    // Save preference
+    if (user) {
+      AfricanTranslationService.updateUserPreferences(user.id, {
+        darkMode: !isDarkMode,
+      });
+    }
+  };
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-    setIsMenuOpen(false)
-  }
+    try {
+      await signOut();
+      navigate("/");
+      setIsMenuOpen(false);
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Error signing out");
+    }
+  };
 
-  const navItems = [
-    { path: '/home', label: 'Home', icon: TrendingUp },
-    { path: '/trending', label: 'Trending', icon: TrendingUp },
-    { path: '/local', label: 'Local News', icon: MapPin },
-    { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark }
-  ]
+  const currentLanguage =
+    AFRICAN_LANGUAGES.find((l) => l.code === selectedLanguage) ||
+    AFRICAN_LANGUAGES[0];
+
+  const navigationItems = [
+    { path: "/", label: "Home", icon: TrendingUp },
+    { path: "/explore", label: "Explore", icon: Globe },
+    { path: "/community", label: "Community", icon: Users, protected: false },
+    {
+      path: "/citizen-journalism",
+      label: "Report",
+      icon: Edit3,
+      protected: true,
+    },
+    { path: "/saved", label: "Saved", icon: Bookmark, protected: true },
+  ];
 
   return (
     <>
@@ -84,9 +195,9 @@ export default function ModernNavbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50' 
-            : 'bg-transparent'
+          isScrolled
+            ? "bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50"
+            : "bg-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -114,8 +225,8 @@ export default function ModernNavbar() {
                   to={path}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                     location.pathname === path
-                      ? 'text-orange-600 bg-orange-50'
-                      : 'text-gray-700 hover:text-orange-600 hover:bg-gray-50'
+                      ? "text-orange-600 bg-orange-50"
+                      : "text-gray-700 hover:text-orange-600 hover:bg-gray-50"
                   }`}
                 >
                   <Icon size={16} />
@@ -147,7 +258,12 @@ export default function ModernNavbar() {
                   className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-gray-50"
                 >
                   <Globe size={16} />
-                  <span>{AFRICAN_LANGUAGES.find(l => l.code === selectedLanguage)?.flag}</span>
+                  <span>
+                    {
+                      AFRICAN_LANGUAGES.find((l) => l.code === selectedLanguage)
+                        ?.flag
+                    }
+                  </span>
                 </button>
 
                 <AnimatePresence>
@@ -163,7 +279,9 @@ export default function ModernNavbar() {
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2 ${
-                            selectedLanguage === lang.code ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                            selectedLanguage === lang.code
+                              ? "bg-orange-50 text-orange-600"
+                              : "text-gray-700"
                           }`}
                         >
                           <span>{lang.flag}</span>
@@ -183,19 +301,22 @@ export default function ModernNavbar() {
                     className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-orange-600 hover:bg-gray-50"
                   >
                     {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
+                      <img
+                        src={profile.avatar_url}
                         alt={profile.username}
                         className="w-6 h-6 rounded-full"
                       />
                     ) : (
                       <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
                         <span className="text-white text-xs font-bold">
-                          {profile?.first_name?.[0] || user.email[0].toUpperCase()}
+                          {profile?.first_name?.[0] ||
+                            user.email[0].toUpperCase()}
                         </span>
                       </div>
                     )}
-                    <span className="hidden md:block">{profile?.first_name || 'User'}</span>
+                    <span className="hidden md:block">
+                      {profile?.first_name || "User"}
+                    </span>
                   </button>
 
                   <AnimatePresence>
@@ -266,7 +387,7 @@ export default function ModernNavbar() {
           {isMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden bg-white border-t border-gray-200"
             >
@@ -291,8 +412,8 @@ export default function ModernNavbar() {
                     onClick={() => setIsMenuOpen(false)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
                       location.pathname === path
-                        ? 'text-orange-600 bg-orange-50'
-                        : 'text-gray-700 hover:text-orange-600 hover:bg-gray-50'
+                        ? "text-orange-600 bg-orange-50"
+                        : "text-gray-700 hover:text-orange-600 hover:bg-gray-50"
                     }`}
                   >
                     <Icon size={20} />
@@ -308,5 +429,5 @@ export default function ModernNavbar() {
       {/* Spacer for fixed navbar */}
       <div className="h-16" />
     </>
-  )
+  );
 }

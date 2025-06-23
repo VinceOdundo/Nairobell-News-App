@@ -1,26 +1,38 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Clock, 
-  Eye, 
-  Bookmark, 
-  Bookmark as BookmarkCheck, 
-  Share2, 
-  MessageCircle, 
-  TrendingUp, 
-  Globe, 
-  Headphones, 
-  Zap,
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Play,
+  Pause,
+  Bookmark,
+  BookmarkCheck,
+  Share2,
+  MessageCircle,
+  TrendingUp,
+  Clock,
+  Volume2,
+  VolumeX,
   Languages,
-  CheckCircle,
-  AlertTriangle,
+  Eye,
+  Lightbulb,
   Heart,
-  MoreHorizontal
-} from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import { EnhancedGeminiService } from '../../services/enhancedGeminiService'
-import CommunityDiscussion from './CommunityDiscussion'
-import toast from 'react-hot-toast'
+  ExternalLink,
+  MapPin,
+  User,
+  Zap,
+  Star,
+  MoreHorizontal,
+  Download,
+  Copy,
+  Flag,
+  ThumbsUp,
+  ThumbsDown,
+  Repeat
+} from 'lucide-react';
+import { AudioNewsService } from '../../services/audioNewsService';
+import { InteractiveStoryService } from '../../services/interactiveStoryService';
+import { AnalyticsService } from '../../services/analyticsService';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const CATEGORY_COLORS = {
   politics: 'bg-red-100 text-red-800 border-red-200',
@@ -45,9 +57,34 @@ const COUNTRY_FLAGS = {
   'tanzania': '🇹🇿'
 }
 
-export default function EnhancedArticleCard({ article, compact = false, showActions = true }) {
-  const { user, profile } = useAuth()
-  const [isBookmarked, setIsBookmarked] = useState(false)
+export default function EnhancedArticleCard({ 
+  article, 
+  viewMode = 'feed',
+  showInteractive = true,
+  showAudio = true,
+  showAnalytics = true,
+  onRead,
+  onBookmark,
+  onShare,
+  className = '' 
+}) {
+  const { user } = useAuth();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioData, setAudioData] = useState(null);
+  const [showLanguages, setShowLanguages] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [showInteractiveStory, setShowInteractiveStory] = useState(false);
+  const [interactiveStory, setInteractiveStory] = useState(null);
+  const [showMore, setShowMore] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [aiSummary, setAiSummary] = useState(null);
+  const [likes, setLikes] = useState(article.likes || 0);
+  const [hasLiked, setHasLiked] = useState(false);
+  
+  const cardRef = useRef(null);
+  const audioRef = useRef(null);
   const [showSummary, setShowSummary] = useState(false)
   const [summary, setSummary] = useState('')
   const [summaryType, setSummaryType] = useState('standard')
