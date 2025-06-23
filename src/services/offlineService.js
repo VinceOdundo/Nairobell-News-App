@@ -606,7 +606,8 @@ export class OfflineService {
   }
 
   // Cleanup store by date
-  static async cleanupStoreByDate(storeName, cutoffDate) {    const transaction = this.db.transaction([storeName], "readwrite");
+  static async cleanupStoreByDate(storeName, cutoffDate) {
+    const transaction = this.db.transaction([storeName], "readwrite");
     const store = transaction.objectStore(storeName);
     const index = store.index("cached_at");
 

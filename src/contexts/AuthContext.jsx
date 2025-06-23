@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
               email: currentUser?.email || "",
               preferred_language: "en",
               country: "",
-              county: "",
+              region: "",
             },
           ])
           .select()
