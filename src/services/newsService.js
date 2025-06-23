@@ -1,313 +1,594 @@
-import { supabase } from '../lib/supabase'
-import { GeminiService } from '../lib/gemini'
-
-// Mock news sources for development (replace with real API integrations)
-const AFRICAN_NEWS_SOURCES = [
-  {
-    id: 'bbc-africa',
-    name: 'BBC Africa',
-    url: 'https://feeds.bbci.co.uk/news/world/africa/rss.xml',
-    country: 'international',
-    language: 'en'
-  },
-  {
-    id: 'aljazeera-africa',
-    name: 'Al Jazeera Africa',
-    url: 'https://www.aljazeera.com/xml/rss/all.xml',
-    country: 'international',
-    language: 'en'
-  },
-  {
-    id: 'daily-nation',
-    name: 'Daily Nation Kenya',
-    url: 'https://nation.africa/kenya/rss',
-    country: 'kenya',
-    language: 'en'
-  },
-  {
-    id: 'punch-nigeria',
-    name: 'The Punch Nigeria',
-    url: 'https://punchng.com/feed/',
-    country: 'nigeria',
-    language: 'en'
-  }
-]
-
-// Mock articles for development
-const MOCK_ARTICLES = [
-  {
-    id: '1',
-    title: 'African Union Summit Addresses Climate Change Initiatives',
-    description: 'Leaders from across Africa gather to discuss comprehensive climate action plans and sustainable development goals for the continent.',
-    thumbnail: 'https://images.pexels.com/photos/3184435/pexels-photo-3184435.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/au-climate-summit',
-    source: 'African Union News',
-    category: 'politics',
-    country_focus: ['south-africa', 'ethiopia', 'kenya'],
-    published_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    is_trending: true,
-    engagement_score: 8.5
-  },
-  {
-    id: '2',
-    title: 'Kenya Leads in Renewable Energy Innovation',
-    description: 'Kenya\'s geothermal and solar energy projects are setting new standards for sustainable power generation across East Africa.',
-    thumbnail: 'https://images.pexels.com/photos/9800029/pexels-photo-9800029.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/kenya-renewable-energy',
-    source: 'East African Standard',
-    category: 'technology',
-    country_focus: ['kenya'],
-    published_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    is_trending: false,
-    engagement_score: 7.2
-  },
-  {
-    id: '3',
-    title: 'Lagos Tech Hub Attracts Global Investment',
-    description: 'Nigeria\'s technology sector continues to grow with major international investors backing Lagos-based startups.',
-    thumbnail: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/lagos-tech-investment',
-    source: 'TechPoint Africa',
-    category: 'business',
-    country_focus: ['nigeria'],
-    published_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    is_trending: true,
-    engagement_score: 9.1
-  },
-  {
-    id: '4',
-    title: 'South African Music Artists Dominate Continental Awards',
-    description: 'Artists from South Africa sweep major categories at the African Music Awards, showcasing the country\'s diverse musical talent.',
-    thumbnail: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/sa-music-awards',
-    source: 'Channel24',
-    category: 'entertainment',
-    country_focus: ['south-africa'],
-    published_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    is_trending: false,
-    engagement_score: 6.8
-  },
-  {
-    id: '5',
-    title: 'Morocco World Cup Infrastructure Boosts Tourism',
-    description: 'Infrastructure developments for the upcoming World Cup are already showing positive impacts on Morocco\'s tourism sector.',
-    thumbnail: 'https://images.pexels.com/photos/3288102/pexels-photo-3288102.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/morocco-tourism-boost',
-    source: 'Morocco World News',
-    category: 'sports',
-    country_focus: ['morocco'],
-    published_at: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
-    is_trending: false,
-    engagement_score: 7.5
-  },
-  {
-    id: '6',
-    title: 'Ethiopian Coffee Farmers Adopt New Technology',
-    description: 'Mobile apps and AI-powered tools are helping Ethiopian coffee farmers optimize their yields and connect directly with international buyers.',
-    thumbnail: 'https://images.pexels.com/photos/4021521/pexels-photo-4021521.jpeg?auto=compress&cs=tinysrgb&w=800',
-    url: 'https://example.com/ethiopia-coffee-tech',
-    source: 'Ethiopian Reporter',
-    category: 'business',
-    country_focus: ['ethiopia'],
-    published_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    is_trending: false,
-    engagement_score: 6.2
-  }
-]
+import { supabase } from "../lib/supabase.js";
+import { DatabaseService } from "./databaseService.js";
+import { GeminiService } from "./enhancedGeminiService.js";
 
 export class NewsService {
+  static API_KEY =
+    import.meta.env.VITE_GNEWS_API_KEY || "bab8859f3225f004320365ab98bb7076";
+  static BASE_URL = "https://gnews.io/api/v4";
+
+  // African countries mapping for GNews API
+  static AFRICAN_COUNTRIES = {
+    nigeria: "ng",
+    kenya: "ke",
+    "south-africa": "za",
+    ghana: "gh",
+    ethiopia: "et",
+    egypt: "eg",
+    morocco: "ma",
+    tunisia: "tn",
+    uganda: "ug",
+    tanzania: "tz",
+    algeria: "dz",
+    angola: "ao",
+    cameroon: "cm",
+    "ivory-coast": "ci",
+    senegal: "sn",
+  };
+
+  // Category mapping for GNews API
+  static CATEGORY_MAPPING = {
+    all: "general",
+    politics: "general",
+    business: "business",
+    technology: "technology",
+    entertainment: "entertainment",
+    sports: "sports",
+    health: "health",
+    science: "science",
+  };
+
+  /**
+   * Get articles from GNews API and optionally save to database
+   */
   static async getArticles(options = {}) {
     const {
-      category = null,
+      category = "all",
       country = null,
-      limit = 20,
-      offset = 0,
+      language = "en",
+      query = null,
+      limit = 10,
       trending = false,
-      search = null
-    } = options
+      userId = null,
+      offset = 0,
+      saveToDb = true,
+    } = options;
 
     try {
-      // In development, return mock data
-      let articles = [...MOCK_ARTICLES]
-
-      // Apply filters
-      if (category) {
-        articles = articles.filter(article => article.category === category)
-      }
-
-      if (country) {
-        articles = articles.filter(article => 
-          article.country_focus.includes(country)
-        )
-      }
+      let articles = [];
 
       if (trending) {
-        articles = articles.filter(article => article.is_trending)
+        articles = await this.getTopHeadlines({
+          category,
+          country,
+          language,
+          limit,
+        });
+      } else if (query) {
+        articles = await this.searchArticles({
+          query,
+          category,
+          country,
+          language,
+          limit,
+        });
+      } else {
+        // Get general news
+        articles = await this.getTopHeadlines({
+          category,
+          country,
+          language,
+          limit,
+        });
       }
 
-      if (search) {
-        const searchLower = search.toLowerCase()
-        articles = articles.filter(article =>
-          article.title.toLowerCase().includes(searchLower) ||
-          article.description.toLowerCase().includes(searchLower)
-        )
-      }
-
-      // Sort by engagement score and date
-      articles.sort((a, b) => {
-        if (trending) {
-          return b.engagement_score - a.engagement_score
+      // Save articles to database if requested
+      if (saveToDb && articles.length > 0) {
+        try {
+          await this.saveArticlesToDatabase(articles);
+        } catch (dbError) {
+          console.warn("Failed to save articles to database:", dbError);
         }
-        return new Date(b.published_at) - new Date(a.published_at)
-      })
+      }
 
-      // Apply pagination
-      const paginatedArticles = articles.slice(offset, offset + limit)
+      // Apply user personalization if userId provided
+      if (userId && articles.length > 0) {
+        try {
+          articles = await this.personalizeArticles(articles, userId);
+        } catch (personalizeError) {
+          console.warn("Failed to personalize articles:", personalizeError);
+        }
+      }
 
       return {
-        articles: paginatedArticles,
+        articles: articles.slice(offset, offset + limit),
         total: articles.length,
-        hasMore: offset + limit < articles.length
-      }
-
+        hasMore: articles.length > offset + limit,
+      };
     } catch (error) {
-      console.error('Error fetching articles:', error)
-      throw error
+      console.error("Error fetching articles:", error);
+
+      // Fallback to database articles if API fails
+      try {
+        const dbArticles = await DatabaseService.getArticles({
+          category: category === "all" ? null : category,
+          country,
+          limit,
+          offset,
+        });
+        return dbArticles;
+      } catch (dbError) {
+        console.error("Database fallback failed:", dbError);
+        return {
+          articles: [],
+          total: 0,
+          hasMore: false,
+          error: error.message,
+        };
+      }
     }
   }
 
-  static async getPersonalizedFeed(userId, preferences = {}) {
+  /**
+   * Get top headlines from GNews API
+   */
+  static async getTopHeadlines(options = {}) {
+    const {
+      category = "general",
+      country = null,
+      language = "en",
+      limit = 10,
+      query = null,
+    } = options;
+
     try {
-      // Get user reading history and preferences
-      const { data: readingHistory } = await supabase
-        .from('reading_history')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100)
+      const params = new URLSearchParams({
+        category: this.CATEGORY_MAPPING[category] || "general",
+        lang: language,
+        max: Math.min(limit, 100), // GNews max is 100
+        apikey: this.API_KEY,
+      });
 
-      const { data: userPrefs } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
-
-      // Get articles based on preferences
-      const articles = await this.getArticles({
-        category: userPrefs?.preferred_categories?.[0],
-        limit: 20
-      })
-
-      // Use Gemini to personalize the feed
-      if (articles.articles.length > 0) {
-        try {
-          const personalizedOrder = await GeminiService.generatePersonalizedFeed(
-            userPrefs || {},
-            articles.articles
-          )
-          
-          // Reorder articles based on AI recommendations
-          if (personalizedOrder && Array.isArray(personalizedOrder)) {
-            const reorderedArticles = personalizedOrder
-              .map(id => articles.articles.find(article => article.id === id))
-              .filter(Boolean)
-            
-            return {
-              ...articles,
-              articles: reorderedArticles
-            }
-          }
-        } catch (error) {
-          console.warn('AI personalization failed, using default order:', error)
-        }
+      if (country && this.AFRICAN_COUNTRIES[country]) {
+        params.append("country", this.AFRICAN_COUNTRIES[country]);
       }
 
-      return articles
+      if (query) {
+        params.append("q", query);
+      }
+
+      const response = await fetch(`${this.BASE_URL}/top-headlines?${params}`);
+
+      if (!response.ok) {
+        throw new Error(
+          `GNews API error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.articles) {
+        return this.transformGNewsArticles(data.articles);
+      }
+
+      return [];
     } catch (error) {
-      console.error('Error getting personalized feed:', error)
-      return this.getArticles()
+      console.error("Error fetching top headlines:", error);
+      throw error;
     }
   }
 
+  /**
+   * Search articles using GNews API
+   */
+  static async searchArticles(options = {}) {
+    const {
+      query,
+      category = null,
+      country = null,
+      language = "en",
+      limit = 10,
+      sortBy = "publishedAt",
+    } = options;
+
+    if (!query || query.trim().length < 2) {
+      throw new Error("Search query must be at least 2 characters long");
+    }
+
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        lang: language,
+        max: Math.min(limit, 100),
+        sortby: sortBy,
+        apikey: this.API_KEY,
+      });
+
+      if (country && this.AFRICAN_COUNTRIES[country]) {
+        params.append("country", this.AFRICAN_COUNTRIES[country]);
+      }
+
+      const response = await fetch(`${this.BASE_URL}/search?${params}`);
+
+      if (!response.ok) {
+        throw new Error(
+          `GNews API error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      if (data.articles) {
+        return this.transformGNewsArticles(data.articles);
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Error searching articles:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transform GNews articles to our format
+   */
+  static transformGNewsArticles(gnewsArticles) {
+    return gnewsArticles.map((article) => ({
+      id: this.generateArticleId(article.title, article.url),
+      title: article.title,
+      description: article.description,
+      content: article.content,
+      url: article.url,
+      thumbnail: article.image,
+      source: article.source?.name || "Unknown",
+      source_url: article.source?.url,
+      published_at: article.publishedAt,
+      category: this.categorizeArticle(article.title, article.description),
+      country_focus: this.detectCountryFocus(
+        article.title + " " + article.description
+      ),
+      language: "en", // GNews doesn't provide language per article
+      is_trending: false,
+      engagement_score: Math.random() * 10, // Mock engagement score
+      credibility_score: 7.5, // Default credibility score
+      reading_time_minutes: this.estimateReadingTime(
+        article.content || article.description
+      ),
+      tags: this.extractTags(article.title + " " + article.description),
+      african_context: this.detectAfricanContext(
+        article.title + " " + article.description
+      ),
+      view_count: 0,
+      likes: 0,
+    }));
+  }
+
+  /**
+   * Generate unique article ID
+   */
+  static generateArticleId(title, url) {
+    const content = `${title}_${url}`;
+    return btoa(content).slice(0, 16);
+  }
+
+  /**
+   * Categorize article based on content
+   */
+  static categorizeArticle(title, description) {
+    const content = (title + " " + description).toLowerCase();
+
+    if (
+      content.includes("politic") ||
+      content.includes("government") ||
+      content.includes("election")
+    ) {
+      return "politics";
+    }
+    if (
+      content.includes("business") ||
+      content.includes("economy") ||
+      content.includes("market")
+    ) {
+      return "business";
+    }
+    if (
+      content.includes("technology") ||
+      content.includes("tech") ||
+      content.includes("digital")
+    ) {
+      return "technology";
+    }
+    if (
+      content.includes("sport") ||
+      content.includes("football") ||
+      content.includes("soccer")
+    ) {
+      return "sports";
+    }
+    if (
+      content.includes("health") ||
+      content.includes("medical") ||
+      content.includes("hospital")
+    ) {
+      return "health";
+    }
+    if (
+      content.includes("entertainment") ||
+      content.includes("movie") ||
+      content.includes("music")
+    ) {
+      return "entertainment";
+    }
+
+    return "general";
+  }
+
+  /**
+   * Detect country focus from content
+   */
+  static detectCountryFocus(content) {
+    const lowerContent = content.toLowerCase();
+    const countries = [];
+
+    for (const [country, code] of Object.entries(this.AFRICAN_COUNTRIES)) {
+      if (lowerContent.includes(country.replace("-", " "))) {
+        countries.push(country);
+      }
+    }
+
+    return countries;
+  }
+
+  /**
+   * Detect African context in content
+   */
+  static detectAfricanContext(content) {
+    const africanKeywords = [
+      "africa",
+      "african",
+      "continent",
+      "sahara",
+      "nile",
+      "lagos",
+      "nairobi",
+      "johannesburg",
+      "cairo",
+      "casablanca",
+      "addis ababa",
+      "accra",
+      "abuja",
+    ];
+
+    const lowerContent = content.toLowerCase();
+    const foundKeywords = africanKeywords.filter((keyword) =>
+      lowerContent.includes(keyword)
+    );
+
+    return foundKeywords.length > 0 ? foundKeywords.join(", ") : null;
+  }
+
+  /**
+   * Extract tags from content
+   */
+  static extractTags(content) {
+    // Simple tag extraction - can be enhanced with NLP
+    const words = content
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "")
+      .split(/\s+/)
+      .filter((word) => word.length > 3)
+      .filter(
+        (word) =>
+          ![
+            "this",
+            "that",
+            "with",
+            "from",
+            "they",
+            "have",
+            "been",
+            "will",
+            "said",
+          ].includes(word)
+      );
+
+    // Get most frequent words as tags
+    const wordCount = {};
+    words.forEach((word) => {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+
+    return Object.entries(wordCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([word]) => word);
+  }
+
+  /**
+   * Estimate reading time
+   */
+  static estimateReadingTime(content) {
+    if (!content) return 1;
+    const wordsPerMinute = 200;
+    const wordCount = content.split(/\s+/).length;
+    return Math.ceil(wordCount / wordsPerMinute);
+  }
+
+  /**
+   * Save articles to database
+   */
+  static async saveArticlesToDatabase(articles) {
+    try {
+      for (const article of articles) {
+        await DatabaseService.saveArticle(article);
+      }
+    } catch (error) {
+      console.error("Error saving articles to database:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Personalize articles for user
+   */
+  static async personalizeArticles(articles, userId) {
+    try {
+      const userPrefs = await DatabaseService.getUserPreferences(userId);
+      if (!userPrefs) return articles;
+
+      // Simple personalization based on preferences
+      return articles.sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        // Prefer user's favorite categories
+        if (userPrefs.preferred_categories?.includes(a.category)) scoreA += 10;
+        if (userPrefs.preferred_categories?.includes(b.category)) scoreB += 10;
+
+        // Prefer user's favorite countries
+        if (
+          userPrefs.preferred_countries?.some((country) =>
+            a.country_focus?.includes(country)
+          )
+        )
+          scoreA += 5;
+        if (
+          userPrefs.preferred_countries?.some((country) =>
+            b.country_focus?.includes(country)
+          )
+        )
+          scoreB += 5;
+
+        return scoreB - scoreA;
+      });
+    } catch (error) {
+      console.error("Error personalizing articles:", error);
+      return articles;
+    }
+  }
+
+  /**
+   * Get trending topics
+   */
   static async getTrendingTopics() {
     try {
-      // In a real implementation, this would aggregate from multiple sources
-      const articles = await this.getArticles({ trending: true, limit: 50 })
-      
-      // Use Gemini to identify trending topics
-      const topics = await GeminiService.generateTrendingTopics(articles.articles)
-      
-      return topics || [
-        { topic: 'Climate Action', score: 0.9, category: 'politics', description: 'African climate initiatives' },
-        { topic: 'Tech Innovation', score: 0.8, category: 'technology', description: 'African tech startups' },
-        { topic: 'Economic Growth', score: 0.7, category: 'business', description: 'African economic development' }
-      ]
+      // Try to get from database first
+      const dbTopics = await DatabaseService.getTrendingTopics();
+      if (dbTopics && dbTopics.length > 0) {
+        return dbTopics;
+      }
+
+      // Fallback: generate from recent articles
+      const articles = await this.getTopHeadlines({ limit: 50 });
+      const topics = this.extractTrendingTopics(articles);
+
+      // Save to database for future use
+      try {
+        await DatabaseService.saveTrendingTopics(topics);
+      } catch (saveError) {
+        console.warn("Failed to save trending topics:", saveError);
+      }
+
+      return topics;
     } catch (error) {
-      console.error('Error getting trending topics:', error)
-      return []
+      console.error("Error getting trending topics:", error);
+      return [];
     }
   }
 
-  static async searchArticles(query, filters = {}) {
-    return this.getArticles({
-      ...filters,
-      search: query
-    })
+  /**
+   * Extract trending topics from articles
+   */
+  static extractTrendingTopics(articles) {
+    const topicCount = {};
+
+    articles.forEach((article) => {
+      // Extract potential topics from title and description
+      const content = `${article.title} ${article.description}`.toLowerCase();
+      const words = content
+        .split(/\s+/)
+        .filter((word) => word.length > 3)
+        .filter(
+          (word) =>
+            !/^(the|and|for|are|but|not|you|all|can|had|her|was|one|our|out|day|get|has|him|his|how|its|may|new|now|old|see|two|way|who|boy|did|man|men|car|use|her|now|air|end|why|ask)$/i.test(
+              word
+            )
+        );
+
+      words.forEach((word) => {
+        topicCount[word] = (topicCount[word] || 0) + 1;
+      });
+    });
+
+    return Object.entries(topicCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([topic, count]) => ({
+        id: this.generateArticleId(topic, Date.now().toString()),
+        name: topic.charAt(0).toUpperCase() + topic.slice(1),
+        count,
+        trend_score: count / articles.length,
+        created_at: new Date().toISOString(),
+      }));
   }
 
-  static async getArticleSummary(articleId, type = 'short', language = 'en') {
+  /**
+   * Get user's bookmarked articles
+   */
+  static async getUserBookmarks(userId) {
     try {
-      // First check if summary already exists
-      const { data: existingSummary } = await supabase
-        .from('news_summaries')
-        .select('*')
-        .eq('post_id', articleId)
-        .eq('language', language)
-        .eq('summary_type', type)
-        .single()
+      return await DatabaseService.getUserBookmarks(userId);
+    } catch (error) {
+      console.error("Error getting user bookmarks:", error);
+      return [];
+    }
+  }
 
+  /**
+   * Toggle bookmark for an article
+   */
+  static async toggleBookmark(userId, articleId) {
+    try {
+      return await DatabaseService.toggleBookmark(userId, articleId);
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get article summary using AI
+   */
+  static async getArticleSummary(articleId, type = "short") {
+    try {
+      // First check if summary already exists in database
+      const existingSummary = await DatabaseService.getArticleSummary(
+        articleId,
+        type
+      );
       if (existingSummary) {
-        return existingSummary.content
+        return existingSummary;
       }
 
-      // Get the article
-      const article = MOCK_ARTICLES.find(a => a.id === articleId)
+      // Get article content
+      const article = await DatabaseService.getArticleById(articleId);
       if (!article) {
-        throw new Error('Article not found')
+        throw new Error("Article not found");
       }
 
-      // Generate summary using Gemini
-      const summary = await GeminiService.generateSummary(article, type, language)
+      // Generate summary using AI
+      const summary = await GeminiService.generateSummary(article, type);
 
       // Save summary to database
-      await supabase
-        .from('news_summaries')
-        .insert([{
-          post_id: articleId,
-          language,
-          summary_type: type,
-          content: summary,
-          generated_by: 'gemini'
-        }])
+      await DatabaseService.saveArticleSummary(articleId, summary, type);
 
-      return summary
+      return summary;
     } catch (error) {
-      console.error('Error generating article summary:', error)
-      throw error
-    }
-  }
-
-  static async recordReadingActivity(userId, articleId, activity) {
-    try {
-      await supabase
-        .from('reading_history')
-        .insert([{
-          user_id: userId,
-          post_id: articleId,
-          ...activity
-        }])
-    } catch (error) {
-      console.error('Error recording reading activity:', error)
+      console.error("Error generating article summary:", error);
+      throw error;
     }
   }
 }
+
+// Legacy support - also export as default
+export default NewsService;

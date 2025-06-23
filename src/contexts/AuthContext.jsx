@@ -36,6 +36,7 @@ export function AuthProvider({ children }) {
   }, []);
   const fetchProfile = async (userId) => {
     try {
+      // First try to get existing profile
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -58,34 +59,58 @@ export function AuthProvider({ children }) {
         const email = currentUser?.email || "";
 
         // Validate required fields before inserting
-        if (!email) {
-          console.error("Cannot create profile: email is required");
-          toast.error("Unable to create profile: missing email");
+        if (!email || !username) {
+          console.error(
+            "Cannot create profile: email and username are required"
+          );
+          toast.error("Unable to create profile: missing required fields");
           return;
+        }
+
+        // Clean username to avoid special characters
+        username = username.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+        if (username.length < 3) {
+          username = `user_${userId.slice(0, 8)}`;
         }
 
         // Handle potential username conflicts
         let attempts = 0;
         let finalUsername = username;
-
         while (attempts < 5) {
           try {
+            // Create profile with only the essential fields
+            const profileData = {
+              id: userId,
+              username: finalUsername,
+              display_name: displayName,
+              email: email,
+              bio: "",
+              is_verified: false,
+              is_official: false,
+              role: "user",
+              onboarding_completed: false,
+            };
+
+            // Add optional fields only if they exist in the schema
+            const optionalFields = {
+              preferred_language:
+                currentUser?.user_metadata?.preferred_language || "en",
+              country: currentUser?.user_metadata?.country || "",
+              region: currentUser?.user_metadata?.region || "",
+              points: 0,
+              reading_streak: 0,
+              first_name: currentUser?.user_metadata?.firstName || "",
+              last_name: currentUser?.user_metadata?.lastName || "",
+            };
+
+            // Only add fields that don't cause errors
+            Object.assign(profileData, optionalFields);
+
+            console.log("Creating profile with data:", profileData);
+
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
-              .insert([
-                {
-                  id: userId,
-                  username: finalUsername,
-                  display_name: displayName,
-                  email: email,
-                  preferred_language:
-                    currentUser?.user_metadata?.preferred_language || "en",
-                  country: currentUser?.user_metadata?.country || "",
-                  region: currentUser?.user_metadata?.region || "",
-                  first_name: currentUser?.user_metadata?.firstName || "",
-                  last_name: currentUser?.user_metadata?.lastName || "",
-                },
-              ])
+              .insert([profileData])
               .select()
               .single();
 
@@ -102,12 +127,12 @@ export function AuthProvider({ children }) {
 
               console.error("Error creating profile:", createError);
               toast.error(
-                "Failed to create user profile. Please contact support if this persists."
+                `Failed to create user profile: ${createError.message}`
               );
               break;
             } else {
               setProfile(newProfile);
-              toast.success("Profile created successfully!");
+              toast.success("Welcome! Your profile has been created.");
               break;
             }
           } catch (insertError) {
@@ -123,9 +148,10 @@ export function AuthProvider({ children }) {
         }
       } else if (error) {
         console.error("Error fetching profile:", error);
-        toast.error("Failed to load user profile");
+        toast.error(`Failed to load user profile: ${error.message}`);
       } else {
         setProfile(data);
+        console.log("Profile loaded successfully:", data);
       }
     } catch (error) {
       console.error("Error in fetchProfile:", error);

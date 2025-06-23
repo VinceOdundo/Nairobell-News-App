@@ -89,16 +89,13 @@ export default function ModernNavbar() {
       window.removeEventListener("offline", handleOffline);
     };
   }, [user]);
-
   const loadUserData = async () => {
     if (!user) return;
 
     try {
       // Load notifications
-      const notificationData = await NotificationService.getUnreadCount(
-        user.id
-      );
-      setUnreadNotifications(notificationData.count);
+      const unreadCount = await NotificationService.getUnreadCount(user.id);
+      setUnreadNotifications(unreadCount);
 
       // Load gamification data
       const userStats = await GamificationService.getUserStats(user.id);
@@ -175,9 +172,8 @@ export default function ModernNavbar() {
   const currentLanguage =
     AFRICAN_LANGUAGES.find((l) => l.code === selectedLanguage) ||
     AFRICAN_LANGUAGES[0];
-
   const navigationItems = [
-    { path: "/", label: "Home", icon: TrendingUp },
+    { path: "/home", label: "Home", icon: TrendingUp },
     { path: "/explore", label: "Explore", icon: Globe },
     { path: "/community", label: "Community", icon: Users, protected: false },
     {
@@ -202,8 +198,12 @@ export default function ModernNavbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            {" "}
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
+            <Link
+              to={user ? "/home" : "/"}
+              className="flex items-center space-x-2"
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center space-x-2"

@@ -945,4 +945,74 @@ export class NotificationService {
       ...config,
     }));
   }
+
+  // Get unread notification count for a user
+  static async getUnreadCount(userId) {
+    try {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("read", false);
+
+      if (error) throw error;
+
+      return count || 0;
+    } catch (error) {
+      console.error("Error getting unread count:", error);
+      return 0;
+    }
+  }
+
+  // Get user points (for gamification)
+  static async getUserPoints(userId) {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("points")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+
+      return data?.points || 0;
+    } catch (error) {
+      console.error("Error getting user points:", error);
+      return 0;
+    }
+  }
+
+  // Get user reading streak
+  static async getUserStreak(userId) {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("reading_streak")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+
+      return data?.reading_streak || 0;
+    } catch (error) {
+      console.error("Error getting user streak:", error);
+      return 0;
+    }
+  }
+
+  // Get offline queue count
+  static async getOfflineQueueCount(userId) {
+    try {
+      // Check local storage or IndexedDB for offline queue
+      const offlineQueue = JSON.parse(
+        localStorage.getItem(`offline_queue_${userId}`) || "[]"
+      );
+      return offlineQueue.length;
+    } catch (error) {
+      console.error("Error getting offline queue count:", error);
+      return 0;
+    }
+  }
 }
+
+export default NotificationService;
