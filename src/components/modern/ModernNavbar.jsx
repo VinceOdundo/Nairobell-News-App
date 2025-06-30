@@ -93,26 +93,49 @@ export default function ModernNavbar() {
     if (!user) return;
 
     try {
-      // Load notifications
-      const unreadCount = await NotificationService.getUnreadCount(user.id);
-      setUnreadNotifications(unreadCount);
+      // Load notifications with error handling
+      try {
+        const unreadCount = await NotificationService.getUnreadCount(user.id);
+        setUnreadNotifications(unreadCount);
+      } catch (notificationError) {
+        console.warn("Could not load notifications:", notificationError);
+        setUnreadNotifications(0);
+      }
 
-      // Load gamification data
-      const userStats = await GamificationService.getUserStats(user.id);
-      setUserPoints(userStats.points || 0);
-      setUserStreak(userStats.streak || 0);
+      // Load gamification data with error handling
+      try {
+        const userStats = await GamificationService.getUserStats(user.id);
+        setUserPoints(userStats.points || 0);
+        setUserStreak(userStats.reading_streak || 0);
+      } catch (gamificationError) {
+        console.warn("Could not load gamification stats:", gamificationError);
+        setUserPoints(0);
+        setUserStreak(0);
+      }
 
-      // Load offline queue
-      const queueStatus = await OfflineService.getQueueStatus();
-      setOfflineQueueCount(queueStatus.pendingCount || 0);
+      // Load offline queue with error handling
+      try {
+        const queueStatus = await OfflineService.getQueueStatus();
+        setOfflineQueueCount(queueStatus.pendingCount || 0);
+      } catch (offlineError) {
+        console.warn("Could not load offline queue:", offlineError);
+        setOfflineQueueCount(0);
+      }
 
-      // Load preferences
-      const preferences = await AfricanTranslationService.getUserPreferences(
-        user.id
-      );
-      setSelectedLanguage(preferences.preferredLanguage || "en");
-      setIsAudioEnabled(preferences.audioEnabled || false);
-      setIsDarkMode(preferences.darkMode || false);
+      // Load preferences with error handling
+      try {
+        const preferences = await AfricanTranslationService.getUserPreferences(
+          user.id
+        );
+        setSelectedLanguage(preferences.preferredLanguage || "en");
+        setIsAudioEnabled(preferences.audioEnabled || false);
+        setIsDarkMode(preferences.darkMode || false);
+      } catch (preferencesError) {
+        console.warn("Could not load user preferences:", preferencesError);
+        setSelectedLanguage("en");
+        setIsAudioEnabled(false);
+        setIsDarkMode(false);
+      }
     } catch (error) {
       console.error("Error loading user data:", error);
     }

@@ -750,9 +750,8 @@ export class AfricanTranslationService {
       Keep it simple and direct. Return only the translated title.
       `;
 
-      const fallback = await EnhancedGeminiService.generateSimpleTranslation(
-        basicPrompt
-      );
+      const fallback =
+        await EnhancedGeminiService.generateSimpleTranslation(basicPrompt);
 
       return {
         translated_title: fallback,
@@ -867,5 +866,51 @@ export class AfricanTranslationService {
       console.error("Error getting translation stats:", error);
       return null;
     }
+  }
+
+  // Get user preferences - NEW METHOD TO FIX THE ERROR
+  static async getUserPreferences(userId) {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("preferred_language, country, region")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.warn("Error fetching user preferences:", error);
+        return this.getDefaultPreferences();
+      }
+
+      return {
+        preferredLanguage: data?.preferred_language || "en",
+        country: data?.country || "",
+        region: data?.region || "",
+        audioEnabled: false, // Would come from user_preferences table
+        darkMode: false, // Would come from user_preferences table
+        dataSaver: false,
+        autoTranslate: false,
+        voiceSpeed: 1.0,
+        voiceGender: "neutral",
+      };
+    } catch (error) {
+      console.error("Error getting user preferences:", error);
+      return this.getDefaultPreferences();
+    }
+  }
+
+  // Get default preferences
+  static getDefaultPreferences() {
+    return {
+      preferredLanguage: "en",
+      country: "",
+      region: "",
+      audioEnabled: false,
+      darkMode: false,
+      dataSaver: false,
+      autoTranslate: false,
+      voiceSpeed: 1.0,
+      voiceGender: "neutral",
+    };
   }
 }

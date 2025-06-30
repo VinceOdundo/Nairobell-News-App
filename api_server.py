@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 import logging
-from news_aggregator import AfricanNewsAggregator
+from news_aggregator_clean import AfricanNewsAggregator
 import asyncio
 import threading
 import time

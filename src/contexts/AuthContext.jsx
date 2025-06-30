@@ -78,39 +78,19 @@ export function AuthProvider({ children }) {
         let finalUsername = username;
         while (attempts < 5) {
           try {
-            // Create profile with only the essential fields
-            const profileData = {
+            // Create profile with only the essential fields first
+            const essentialData = {
               id: userId,
               username: finalUsername,
               display_name: displayName,
               email: email,
-              bio: "",
-              is_verified: false,
-              is_official: false,
-              role: "user",
-              onboarding_completed: false,
             };
 
-            // Add optional fields only if they exist in the schema
-            const optionalFields = {
-              preferred_language:
-                currentUser?.user_metadata?.preferred_language || "en",
-              country: currentUser?.user_metadata?.country || "",
-              region: currentUser?.user_metadata?.region || "",
-              points: 0,
-              reading_streak: 0,
-              first_name: currentUser?.user_metadata?.firstName || "",
-              last_name: currentUser?.user_metadata?.lastName || "",
-            };
-
-            // Only add fields that don't cause errors
-            Object.assign(profileData, optionalFields);
-
-            console.log("Creating profile with data:", profileData);
+            console.log("Creating profile with essential data:", essentialData);
 
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
-              .insert([profileData])
+              .insert([essentialData])
               .select()
               .single();
 
@@ -126,11 +106,61 @@ export function AuthProvider({ children }) {
               }
 
               console.error("Error creating profile:", createError);
+
+              // Try to update the existing profile if it already exists
+              if (createError.code === "23505") {
+                const { data: existingProfile, error: fetchError } =
+                  await supabase
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", userId)
+                    .single();
+
+                if (existingProfile && !fetchError) {
+                  setProfile(existingProfile);
+                  toast.success("Welcome back!");
+                  break;
+                }
+              }
+
               toast.error(
                 `Failed to create user profile: ${createError.message}`
               );
               break;
             } else {
+              // Now try to update with optional fields
+              const optionalFields = {};
+
+              // Only add fields that exist in the schema
+              const fieldsToTry = {
+                bio: "",
+                is_verified: false,
+                is_official: false,
+                role: "user",
+                onboarding_completed: false,
+                preferred_language:
+                  currentUser?.user_metadata?.preferred_language || "en",
+                country: currentUser?.user_metadata?.country || "",
+                region: currentUser?.user_metadata?.region || "",
+                points: 0,
+                reading_streak: 0,
+                first_name: currentUser?.user_metadata?.firstName || "",
+                last_name: currentUser?.user_metadata?.lastName || "",
+              };
+
+              // Try to update with optional fields, ignore errors for missing columns
+              try {
+                await supabase
+                  .from("profiles")
+                  .update(fieldsToTry)
+                  .eq("id", userId);
+              } catch (updateError) {
+                console.warn(
+                  "Some optional fields couldn't be updated:",
+                  updateError
+                );
+              }
+
               setProfile(newProfile);
               toast.success("Welcome! Your profile has been created.");
               break;

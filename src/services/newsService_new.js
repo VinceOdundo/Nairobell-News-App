@@ -4,69 +4,7 @@ import { supabase } from "../lib/supabase";
 const API_BASE_URL = "http://localhost:5000/api";
 
 export class NewsService {
-  // Mock data fallback for when API is unavailable
-  static mockArticles = [
-    {
-      id: "1",
-      title: "African Union Summit Addresses Climate Change",
-      description:
-        "Leaders from across Africa gather to discuss climate adaptation strategies and sustainable development goals.",
-      content:
-        "The African Union Summit opened today with a focus on climate change adaptation...",
-      url: "https://example.com/article1",
-      thumbnail:
-        "https://images.unsplash.com/photo-1569163139394-de4e4f43e4e3?w=800",
-      source: "African News Network",
-      category: "politics",
-      country_focus: ["africa"],
-      language: "en",
-      published_at: new Date().toISOString(),
-      is_breaking: false,
-      is_trending: true,
-      engagement_score: 8.5,
-      credibility_score: 9.0,
-    },
-    {
-      id: "2",
-      title: "Tech Innovation Hubs Emerge Across Nigeria",
-      description:
-        "Lagos and Abuja lead the charge in African fintech revolution with new startup incubators.",
-      content:
-        "Nigeria continues to cement its position as Africa's tech giant...",
-      url: "https://example.com/article2",
-      thumbnail:
-        "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800",
-      source: "TechCabal",
-      category: "technology",
-      country_focus: ["nigeria"],
-      language: "en",
-      published_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      is_breaking: false,
-      is_trending: false,
-      engagement_score: 7.8,
-      credibility_score: 8.5,
-    },
-    {
-      id: "3",
-      title: "Kenya's Green Energy Project Shows Promise",
-      description:
-        "Solar and wind energy initiatives in Kenya exceed expectations, providing clean electricity to rural communities.",
-      content:
-        "Kenya's ambitious renewable energy program has achieved remarkable milestones...",
-      url: "https://example.com/article3",
-      thumbnail:
-        "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=800",
-      source: "Daily Nation Kenya",
-      category: "business",
-      country_focus: ["kenya"],
-      language: "en",
-      published_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      is_breaking: true,
-      is_trending: true,
-      engagement_score: 9.2,
-      credibility_score: 8.8,
-    },
-  ];
+  s;
 
   // Fetch articles from the Python API
   static async fetchFromAPI(endpoint, params = {}) {
@@ -262,104 +200,43 @@ export class NewsService {
   // Get trending news
   static async getTrendingNews(limit = 10) {
     try {
-      const data = await this.fetchFromAPI("/news/trending", { limit });
-      return {
-        articles: data.articles || [],
-        total: data.total || 0,
-        hasMore: data.hasMore || false,
-      };
+      const data = await this.fetchFromAPI("/trending", { limit });
+      return data.trending_topics || [];
     } catch (error) {
-      console.error("Error fetching trending news:", error);
-      // Return mock trending articles as fallback
-      const trendingMock = this.mockArticles.filter(
-        (article) => article.is_trending
-      );
-      return {
-        articles: trendingMock,
-        total: trendingMock.length,
-        hasMore: false,
-      };
-    }
-  }
-
-  // Get trending topics - NEW METHOD TO FIX THE ERROR
-  static async getTrendingTopics() {
-    try {
-      const data = await this.fetchFromAPI("/trending-topics");
-      return data.topics || [];
-    } catch (error) {
-      console.error("Error fetching trending topics:", error);
-      // Return mock trending topics as fallback
+      console.warn("Unable to fetch trending news, using fallback");
+      // Return mock trending topics
       return [
-        { id: 1, name: "Climate Change", count: 45, trend: "up" },
-        { id: 2, name: "Technology", count: 38, trend: "up" },
-        { id: 3, name: "Politics", count: 32, trend: "stable" },
-        { id: 4, name: "Business", count: 28, trend: "down" },
-        { id: 5, name: "Health", count: 24, trend: "up" },
+        {
+          topic: "African Union Summit",
+          score: 0.9,
+          category: "politics",
+          description: "Continental cooperation",
+        },
+        {
+          topic: "Economic Growth",
+          score: 0.8,
+          category: "business",
+          description: "African economies expanding",
+        },
+        {
+          topic: "Technology Innovation",
+          score: 0.7,
+          category: "technology",
+          description: "Tech hubs emerging",
+        },
+        {
+          topic: "Climate Action",
+          score: 0.6,
+          category: "environment",
+          description: "Green energy initiatives",
+        },
+        {
+          topic: "Healthcare Progress",
+          score: 0.5,
+          category: "health",
+          description: "Medical advances",
+        },
       ];
-    }
-  }
-
-  // Get topic trends - Additional method for better trending analysis
-  static async getTopicTrends(timeframe = "24h") {
-    try {
-      const data = await this.fetchFromAPI("/topic-trends", { timeframe });
-      return data.trends || [];
-    } catch (error) {
-      console.error("Error fetching topic trends:", error);
-      return [];
-    }
-  }
-
-  // Get articles method - updated to work with the existing structure
-  static async getArticles(options = {}) {
-    const {
-      page = 1,
-      limit = 20,
-      category = "",
-      country = "",
-      search = "",
-      trending = false,
-    } = options;
-
-    try {
-      // Try to fetch from Python API first
-      const data = await this.fetchFromAPI("/news", {
-        page,
-        limit,
-        category,
-        country,
-        search,
-        trending,
-      });
-
-      return {
-        articles: data.articles || [],
-        total: data.total || 0,
-        hasMore: data.hasMore || false,
-      };
-    } catch (error) {
-      console.error("Error fetching articles:", error);
-      // Return mock data as fallback
-      let filteredArticles = [...this.mockArticles];
-
-      if (trending) {
-        filteredArticles = filteredArticles.filter(
-          (article) => article.is_trending
-        );
-      }
-
-      if (category) {
-        filteredArticles = filteredArticles.filter(
-          (article) => article.category === category
-        );
-      }
-
-      return {
-        articles: filteredArticles.slice(0, limit),
-        total: filteredArticles.length,
-        hasMore: filteredArticles.length > limit,
-      };
     }
   }
 
@@ -575,31 +452,6 @@ export class NewsService {
       return data.sources || [];
     } catch (error) {
       return [];
-    }
-  }
-
-  // Additional safety methods to prevent undefined function errors
-  static async safeApiCall(methodName, ...args) {
-    try {
-      if (typeof this[methodName] === "function") {
-        return await this[methodName](...args);
-      } else {
-        console.warn(`Method ${methodName} not found in NewsService`);
-        return { articles: [], total: 0, hasMore: false };
-      }
-    } catch (error) {
-      console.error(`Error calling NewsService.${methodName}:`, error);
-      return { articles: [], total: 0, hasMore: false };
-    }
-  }
-
-  // Ensure getArticles method exists and works
-  static async getArticles(options = {}) {
-    try {
-      return await this.getLatestNews(options);
-    } catch (error) {
-      console.error("Error in getArticles:", error);
-      return { articles: [], total: 0, hasMore: false };
     }
   }
 }

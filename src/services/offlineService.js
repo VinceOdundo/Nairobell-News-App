@@ -801,4 +801,42 @@ export class OfflineService {
   static setDataSaverMode(enabled) {
     localStorage.setItem("data_saver_mode", enabled.toString());
   }
+
+  // Get queue status - NEW METHOD TO FIX THE ERROR
+  static async getQueueStatus() {
+    try {
+      const db = await this.initializeDatabase();
+      const transaction = db.transaction([STORES.READING_QUEUE], "readonly");
+      const store = transaction.objectStore(STORES.READING_QUEUE);
+
+      const allItems = await this.getAllFromStore(store);
+
+      const stats = {
+        totalCount: allItems.length,
+        pendingCount: allItems.filter((item) => !item.completed).length,
+        completedCount: allItems.filter((item) => item.completed).length,
+        highPriorityCount: allItems.filter(
+          (item) => item.priority === "high" && !item.completed
+        ).length,
+        mediumPriorityCount: allItems.filter(
+          (item) => item.priority === "medium" && !item.completed
+        ).length,
+        lowPriorityCount: allItems.filter(
+          (item) => item.priority === "low" && !item.completed
+        ).length,
+      };
+
+      return stats;
+    } catch (error) {
+      console.error("Error getting queue status:", error);
+      return {
+        totalCount: 0,
+        pendingCount: 0,
+        completedCount: 0,
+        highPriorityCount: 0,
+        mediumPriorityCount: 0,
+        lowPriorityCount: 0,
+      };
+    }
+  }
 }

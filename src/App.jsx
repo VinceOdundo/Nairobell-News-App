@@ -71,7 +71,8 @@ function PublicRoute({ children }) {
 }
 
 function AppRoutes() {
-  return (    <Routes>
+  return (
+    <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
       <Route
@@ -92,7 +93,8 @@ function AppRoutes() {
       />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/search" element={<SearchPage />} />
-      <Route path="/offline" element={<OfflinePage />} />{/* Protected routes */}
+      <Route path="/offline" element={<OfflinePage />} />
+      {/* Protected routes */}
       <Route
         path="/home"
         element={
@@ -168,7 +170,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <div className="min-h-screen bg-gray-50">
             <AppRoutes />
             <Toaster
